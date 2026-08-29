@@ -10,5 +10,9 @@
 #include <std_msgs/msg/int32.h>
 // Custom transport over UART (for Pico platform)
 #include <rmw_microros/rmw_microros.h>
-#include "pico/stdlib.h"
 #include "pico_uart_transports.h"
+
+int main(void){
+    
+    return 0;
+}

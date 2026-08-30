@@ -28,7 +28,7 @@ target_link_libraries(main
 
 target_include_directories(main PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/ libmicroros/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/libmicroros/include
 )
 
 SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections")

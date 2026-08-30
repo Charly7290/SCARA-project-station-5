@@ -92,3 +92,9 @@ void init_motor(int IN1, int IN2, int PWM_M){
     // Enable PWM output on the slice
     pwm_set_enabled(slice_num, true);
 }
+
+void move_motor(int pin_pwm, int dutyC){
+    // Get the PWM slice number associated with the GPIO pin
+    uint slice_num = pwm_gpio_to_slice_num(pin_pwm);
+    pwm_set_chan_level(slice_num, pwm_gpio_to_channel(pin_pwm), dutyC);
+}

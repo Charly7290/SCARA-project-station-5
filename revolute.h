@@ -20,3 +20,4 @@ void limitS(int pin);
 void encoder_a_irq_handler(bool motor, int motor_encoderA, int motor_encoderB, uint gpio, uint32_t events);
 void init_encoder(int motor_encoderA, int motor_encoderB);
 void init_motor(int IN1, int IN2, int PWM_M);
+void move_motor(int pin_pwm, int dutyC);

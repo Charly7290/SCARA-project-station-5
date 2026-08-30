@@ -1,5 +1,5 @@
 #include "system_lib.h"
-#include "prismatic&tool.h"
+#include "prismatic.h"
 #include "revolute.h"
 // Micro-ROS core and RCL (ROS Client Library) includes
 #include <rcl/rcl.h>
@@ -13,6 +13,25 @@
 #include "pico_uart_transports.h"
 
 int main(void){
+    //  STATE INIT:
+    stdio_init_all(); //Initialize UART
+    init_servo();
+    init_tool();
+    init_limitS(LIMIT_SWITCH_0_L1);
+    init_limitS(LIMIT_SWITCH_1_L1);
+    init_limitS(LIMIT_SWITCH_0_L2);
+    init_limitS(LIMIT_SWITCH_1_L2);
+    init_encoder(ENCODER_A_M1, ENCODER_B_M1);
+    init_encoder(ENCODER_A_M2, ENCODER_B_M2);
+    init_motor(AIN1_DIR_M1, AIN2_DIR_M1, PWM_M1);
+    init_motor(BIN1_DIR_M2, BIN2_DIR_M2, PWM_M2);
     
-    return 0;
+
+    while(1){
+
+
+        sleep_ms(20);
+    }
+
+    return 0; //success
 }

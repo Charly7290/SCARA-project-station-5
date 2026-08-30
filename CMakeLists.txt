@@ -13,6 +13,8 @@ pico_sdk_init()
 link_directories(libmicroros)
 add_executable(main
     main.c
+    revolute.c
+    prismatic.c
     pico_uart_transport.c
 )
 target_link_libraries(main

@@ -1,6 +1,7 @@
 #pragma once // to avoid including the same header file many times
 
 //  GPIOs:
+#define LED_PIN 25 //buil-in LED
 #define PWM_SERVO 0 
 
 #define PWM_M1 2 //D6

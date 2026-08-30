@@ -107,6 +107,8 @@ int main(void){
     init_motor(BIN1_DIR_M2, BIN2_DIR_M2, PWM_M2);
     move_motor(PWM_M1, 0);
     move_motor(PWM_M2, 0);
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
     
     bool l1_homed, l2_homed;
     scara_state_t last_reported_state = -1;
@@ -117,6 +119,12 @@ int main(void){
         if(current_state != last_reported_state){ //To run anything once
             switch(current_state){
                 case STATE_IDLE:
+                    for (int i = 0; i < 4; i++){
+                        gpio_put(LED_PIN, 1);
+                        sleep_ms(125);
+                        gpio_put(LED_PIN, 0);
+                        sleep_ms(125);
+                    }
                     TOOL_OFF;
                     //waiting for a message to change state...
                     break;

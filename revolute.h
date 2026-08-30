@@ -1,5 +1,7 @@
 #pragma once
 #include <stdbool.h>
+#include <stdint.h>
+#include "pico/stdlib.h" 
 
 #define CCW_M1 (gpio_put(AIN1_DIR_M1, 0), gpio_put(AIN2_DIR_M1, 1))
 #define CW_M1 (gpio_put(AIN1_DIR_M1, 1), gpio_put(AIN2_DIR_M1, 0))
@@ -16,8 +18,8 @@
 #define SWITCH_1_L2_ON (gpio_get(LIMIT_SWITCH_1_L2) == 0)
 #define SWITCH_1_L2_OFF (gpio_get(LIMIT_SWITCH_1_L2) == 1)
 
-void limitS(int pin);
-void encoder_a_irq_handler(bool motor, int motor_encoderA, int motor_encoderB, uint gpio, uint32_t events);
+void init_limitS(int pin);
+void encoder_a_irq_handler(uint gpio, uint32_t events);
 void init_encoder(int motor_encoderA, int motor_encoderB);
 void init_motor(int IN1, int IN2, int PWM_M);
 void move_motor(int pin_pwm, int dutyC);

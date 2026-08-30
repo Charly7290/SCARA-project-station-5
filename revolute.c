@@ -1,8 +1,8 @@
 #include "revolute.h"
 #include "system_lib.h"
 
-volatile int32_t encoder_M1_ticks = 0; // Store the number of encoder tick of M1
-volatile int32_t encoder_M2_ticks = 0; // Store the number of encoder tick of M2
+static uint pinA_m1, pinB_m1, pinA_m2, pinB_m2;
+volatile int32_t encoder_count[2] = {0, 0}; // Store the number of encoder tick of M1 and M2
 
 void init_limitS(int pin){
     gpio_init(pin);
@@ -11,43 +11,46 @@ void init_limitS(int pin){
 }
 
 // GPIO interrupt handler for Encoder A pin:
-void encoder_a_irq_handler(bool motor, int motor_encoderA, int motor_encoderB, uint gpio, uint32_t events) {
-    // Read both encoder A and B pins
-    bool encoder_a = gpio_get(motor_encoderA);
-    bool encoder_b = gpio_get(motor_encoderB);
-
-    // Determine direction based on the quadrature signals
-    // Count rising and falling edges of both A and B channels
-    if (gpio == motor_encoderA) {
-        if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
-            if(motor){ //1 for M1, 0 for M2
-                encoder_M1_ticks++; // Forward direction
-            } else{
-                encoder_M2_ticks++; //Forward direction
+void encoder_a_irq_handler(uint gpio, uint32_t events) {
+    if (gpio == pinA_m1 || gpio == pinB_m1) {
+        // Read both encoder A and B pins
+        bool encoder_a = gpio_get(pinA_m1);
+        bool encoder_b = gpio_get(pinB_m1);
+        // Determine direction based on the quadrature signals
+        // Count rising and falling edges of both A and B channels
+        if (gpio == pinA_m1) {
+            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
+                encoder_count[0]++; // Forward direction
+            } else {                 
+                encoder_count[0]--; // Reverse direction
             }
         } else {
-            if(motor){ //1 for M1, 0 for M2
-                encoder_M1_ticks--; // Reverse direction
-            } else{
-                encoder_M2_ticks--; // Reverse direction
+            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
+                encoder_count[0]--; // Forward direction
+            } else {                 
+                encoder_count[0]++; // Reverse direction
             }
         }
-    } else {
-        if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
-            if(motor){ //1 for M1, 0 for M2
-                encoder_M1_ticks--; // Forward direction
-            } else{
-                encoder_M2_ticks--; //Forward direction
+    } else if (gpio == pinA_m2 || gpio == pinB_m2) {
+        // Read both encoder A and B pins
+        bool encoder_a = gpio_get(pinA_m2);
+        bool encoder_b = gpio_get(pinB_m2);
+        // Determine direction based on the quadrature signals
+        // Count rising and falling edges of both A and B channels
+        if (gpio == pinA_m2) {
+            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
+                encoder_count[1]++; // Forward direction
+            } else {                 
+                encoder_count[1]--; // Reverse direction
             }
         } else {
-            if(motor){ //1 for M1, 0 for M2
-                encoder_M1_ticks++; // Reverse direction
-            } else{
-                encoder_M2_ticks++; // Reverse direction
+            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
+                encoder_count[1]--; // Forward direction
+            } else {                 
+                encoder_count[1]++; // Reverse direction
             }
         }
     }
-
 }
 
 void init_encoder(int motor_encoderA, int motor_encoderB){

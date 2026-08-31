@@ -32,14 +32,46 @@ volatile scara_state_t current_state = STATE_INIT;
 
 void cmd_callback(const void *msgin) {
     const std_msgs__msg__String *m = (const std_msgs__msg__String *)msgin;
-    if (strcmp(m->data.data, "HOME") == 0) {
+    const char *cmd = m->data.data;
+
+    if (strcmp(cmd, "HOME") == 0) {
+        // Stop any in-progress manual jog before handing control to the homing routine
+        move_motor(PWM_M1, 0);
+        move_motor(PWM_M2, 0);
         current_state = STATE_HOMING;
-    } else if (strcmp(m->data.data, "MANUAL") == 0) {
+    } else if (strcmp(cmd, "MANUAL") == 0) {
         current_state = STATE_MANUAL;
-    } else if (strcmp(m->data.data, "PROCESS") == 0) {
+    } else if (strcmp(cmd, "PROCESS") == 0) {
+        move_motor(PWM_M1, 0);
+        move_motor(PWM_M2, 0);
         current_state = STATE_PICK_CASE;
+    // Manual jog commands (only honored while in STATE_MANUAL) 
+    } else if (strcmp(cmd, "J1_CW") == 0) {
+        if (current_state == STATE_MANUAL) { CW_M1; move_motor(PWM_M1, MANUAL_JOG_DUTY); }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strcmp(cmd, "J1_CCW") == 0) {
+        if (current_state == STATE_MANUAL) { CCW_M1; move_motor(PWM_M1, MANUAL_JOG_DUTY); }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strcmp(cmd, "J1_STOP") == 0) {
+        if (current_state == STATE_MANUAL) { move_motor(PWM_M1, 0); }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strcmp(cmd, "J2_CW") == 0) {
+        if (current_state == STATE_MANUAL) { CW_M2; move_motor(PWM_M2, MANUAL_JOG_DUTY); }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strcmp(cmd, "J2_CCW") == 0) {
+        if (current_state == STATE_MANUAL) { CCW_M2; move_motor(PWM_M2, MANUAL_JOG_DUTY); }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strcmp(cmd, "J2_STOP") == 0) {
+        if (current_state == STATE_MANUAL) { move_motor(PWM_M2, 0); }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strcmp(cmd, "J3_UP") == 0) {
+        if (current_state == STATE_MANUAL) { servo_jog_up(); }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strcmp(cmd, "J3_DOWN") == 0) {
+        if (current_state == STATE_MANUAL) { servo_jog_down(); }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else {
-        printf("Unknown state: %s\n", m->data.data);
+        printf("Unknown state: %s\n", cmd);
     }
 }
 
@@ -65,7 +97,7 @@ int main(void){
     allocator = rcl_get_default_allocator();
 
     // Wait for agent successful ping for 2 minutes.
-    const int timeout_ms = 1000; 
+    const int timeout_ms = 1000;
     const uint8_t attempts = 120;
 
     rcl_ret_t ret = rmw_uros_ping_agent(timeout_ms, attempts);
@@ -81,7 +113,7 @@ int main(void){
 
     // Initialize a Micro-ROS node with default options
     rclc_node_init_default(&node, "pico_node", "", &support);
-    
+
     msg.data.data = buffer;
     msg.data.capacity = sizeof(buffer);
     msg.data.size = 0;
@@ -109,7 +141,7 @@ int main(void){
     move_motor(PWM_M2, 0);
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
-    
+
     bool l1_homed, l2_homed;
     scara_state_t last_reported_state = -1;
 
@@ -142,33 +174,29 @@ int main(void){
 
                     break;
                 case STATE_PICK_CASE:
-                
+
 
                     break;
                 case STATE_PLACE_CASE:
-                
-                
-                    
+
+
                     break;
                 case STATE_PICK_PCB:
-                
-                
-                    
+
+
                     break;
                 case STATE_INSERT_PCB:
-                    
 
-                    
+
                     break;
                 default: //just in case
                     break;
             }
-            last_reported_state = current_state; 
+            last_reported_state = current_state;
         }
         switch(current_state){ //TO run continuously
             case STATE_MANUAL:
-
-
+                // Jog commands (J1_CW/J1_CCW/J1_STOP, J2_*, J3_UP/J3_DOWN) are handled directly in cmd_callback() as they arrive.
                 //current_state = STATE_IDLE;
                 break;
             case STATE_HOMING:
@@ -186,22 +214,18 @@ int main(void){
                 }
                 break;
             case STATE_PICK_CASE:
-            
-            
+
                 //current_state = STATE_PLACE_CASE;
                 break;
             case STATE_PLACE_CASE:
-            
-            
+
                 //current_state = STATE_PICK_PCB;
                 break;
             case STATE_PICK_PCB:
-            
-            
+
                 //current_state = STATE_INSERT_PCB;
                 break;
             case STATE_INSERT_PCB:
-                
 
                 //current_state = STATE_HOMING;
                 break;

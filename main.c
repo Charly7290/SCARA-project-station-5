@@ -143,10 +143,12 @@ int main(void){
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
     bool l1_homed, l2_homed;
+    uint64_t last_time = time_us_64();
     scara_state_t last_reported_state = -1;
 
     current_state = STATE_IDLE;
     while(1){
+        uint64_t current_time = time_us_64();
         rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)); //each call waits up to 100ms for a new message from publisher
         if(current_state != last_reported_state){ //To run anything once
             switch(current_state){
@@ -204,6 +206,10 @@ int main(void){
                     move_motor(PWM_M1, 0);
                     move_motor(PWM_M2, 625); //5% of duty cycle
                     l1_homed = true;
+                    if (current_time - last_time >= 500000) { //500ms
+                        set_servo_angle(90);
+                        last_time = current_time;
+                    }
                 }
                 if (SWITCH_0_L2_ON && l2_homed == false){
                     move_motor(PWM_M2, 0);

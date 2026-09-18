@@ -32,6 +32,7 @@ void init_servo(void) {
 
     // Enable PWM output
     pwm_set_enabled(slice_num, true);
+    set_servo_angle(90); //90° = stop
 }
 
 void init_tool(void){

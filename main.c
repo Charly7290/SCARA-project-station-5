@@ -47,19 +47,19 @@ void cmd_callback(const void *msgin) {
         current_state = STATE_PICK_CASE;
     // Manual jog commands (only honored while in STATE_MANUAL) 
     } else if (strcmp(cmd, "J1_CW") == 0) {
-        if (current_state == STATE_MANUAL) { CW_M1; move_motor(PWM_M1, MANUAL_JOG_DUTY); }
+        if (current_state == STATE_MANUAL) { CW_M1; move_motor(PWM_M1, MANUAL_JOG_DUTY_M1); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J1_CCW") == 0) {
-        if (current_state == STATE_MANUAL) { CCW_M1; move_motor(PWM_M1, MANUAL_JOG_DUTY); }
+        if (current_state == STATE_MANUAL) { CCW_M1; move_motor(PWM_M1, MANUAL_JOG_DUTY_M1); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J1_STOP") == 0) {
         if (current_state == STATE_MANUAL) { move_motor(PWM_M1, 0); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J2_CW") == 0) {
-        if (current_state == STATE_MANUAL) { CW_M2; move_motor(PWM_M2, MANUAL_JOG_DUTY); }
+        if (current_state == STATE_MANUAL) { CW_M2; move_motor(PWM_M2, MANUAL_JOG_DUTY_M2); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J2_CCW") == 0) {
-        if (current_state == STATE_MANUAL) { CCW_M2; move_motor(PWM_M2, MANUAL_JOG_DUTY); }
+        if (current_state == STATE_MANUAL) { CCW_M2; move_motor(PWM_M2, MANUAL_JOG_DUTY_M2); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J2_STOP") == 0) {
         if (current_state == STATE_MANUAL) { move_motor(PWM_M2, 0); }
@@ -165,7 +165,7 @@ int main(void){
                     CCW_M1;
                     CW_M2;
                     servo_home();
-                    move_motor(PWM_M1, 6249); //50% of duty cycle
+                    move_motor(PWM_M1, 1250); //10% of duty cycle
                     l1_homed = false;
                     l2_homed = false;
                     break;
@@ -202,7 +202,7 @@ int main(void){
             case STATE_HOMING:
                 if (SWITCH_0_L1_ON && l1_homed == false){
                     move_motor(PWM_M1, 0);
-                    move_motor(PWM_M2, 6249);
+                    move_motor(PWM_M2, 625); //5% of duty cycle
                     l1_homed = true;
                 }
                 if (SWITCH_0_L2_ON && l2_homed == false){

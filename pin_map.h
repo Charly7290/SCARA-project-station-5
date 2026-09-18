@@ -24,5 +24,6 @@
 #define LIMIT_SWITCH_1_L2 21 //End, link 2
 
 // Manual-jog test tuning
-#define MANUAL_JOG_DUTY 3000   // PWM duty for M1/M2 
+#define MANUAL_JOG_DUTY_M1 1000   // PWM duty for M1
+#define MANUAL_JOG_DUTY_M2 625  // PWM duty for M2
 #define SERVO_JOG_STEP_DEG 10  // Degrees per J3_UP/J3_DOWN command

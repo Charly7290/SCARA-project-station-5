@@ -3,7 +3,7 @@
 
 static int servo_angle_deg = 0;
 
-static void set_servo_angle(int angle_deg){
+void set_servo_angle(int angle_deg){
     if (angle_deg < 0) angle_deg = 0;
     if (angle_deg > 180) angle_deg = 180;
     servo_angle_deg = angle_deg;
@@ -45,13 +45,13 @@ int map(int x, int in_min, int in_max, int out_min, int out_max) {
 }
 
 void servo_home(void){
-    set_servo_angle(180); // 180 deg as starting/reference position
+    set_servo_angle(0); // 0 deg as starting/reference position
 }
 
 void servo_jog_up(void){
-    set_servo_angle(servo_angle_deg + SERVO_JOG_STEP_DEG);
+    set_servo_angle(90 + SERVO_JOG_STEP_DEG);
 }
 
 void servo_jog_down(void){
-    set_servo_angle(servo_angle_deg - SERVO_JOG_STEP_DEG);
+    set_servo_angle(90 - SERVO_JOG_STEP_DEG);
 }

@@ -53,7 +53,14 @@ void encoder_a_irq_handler(uint gpio, uint32_t events) {
     }
 }
 
-void init_encoder(int motor_encoderA, int motor_encoderB){
+void init_encoder(int motor_index, int motor_encoderA, int motor_encoderB){
+    if (motor_index == 1) {
+        pinA_m1 = motor_encoderA;
+        pinB_m1 = motor_encoderB;
+    } else {
+        pinA_m2 = motor_encoderA;
+        pinB_m2 = motor_encoderB;
+    }
     // Initialize the GPIO pins connected to the encoder
     gpio_init(motor_encoderA);
     gpio_set_dir(motor_encoderA, GPIO_IN);

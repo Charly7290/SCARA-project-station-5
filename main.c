@@ -133,8 +133,8 @@ int main(void){
     init_limitS(LIMIT_SWITCH_1_L1);
     init_limitS(LIMIT_SWITCH_0_L2);
     init_limitS(LIMIT_SWITCH_1_L2);
-    init_encoder(ENCODER_A_M1, ENCODER_B_M1);
-    init_encoder(ENCODER_A_M2, ENCODER_B_M2);
+    init_encoder(1, ENCODER_A_M1, ENCODER_B_M1);
+    init_encoder(2, ENCODER_A_M2, ENCODER_B_M2);
     init_motor(AIN1_DIR_M1, AIN2_DIR_M1, PWM_M1);
     init_motor(BIN1_DIR_M2, BIN2_DIR_M2, PWM_M2);
     move_motor(PWM_M1, 0);
@@ -142,9 +142,11 @@ int main(void){
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
-    bool l1_homed, l2_homed;
+    bool l1_calib, l1_homed, l2_calib, l2_homed, m1_moved, m2_moved;
     uint64_t last_time = time_us_64();
-    scara_state_t last_reported_state = -1;
+    scara_state_t last_reported_state = STATE_INIT;
+    float encoder_degrees_M1, encoder_degrees_M2;
+    const float target_M2_home = 180, target_M1_home = 270; 
 
     current_state = STATE_IDLE;
     while(1){
@@ -168,8 +170,12 @@ int main(void){
                     CW_M2;
                     servo_home();
                     move_motor(PWM_M1, 1250); //10% of duty cycle
+                    l1_calib = false;
                     l1_homed = false;
+                    l2_calib = false;
                     l2_homed = false;
+                    m1_moved = false;
+                    m2_moved = false;
                     break;
                 case STATE_MANUAL:
                     TOOL_OFF;
@@ -202,18 +208,48 @@ int main(void){
                 //current_state = STATE_IDLE;
                 break;
             case STATE_HOMING:
-                if (SWITCH_0_L1_ON && l1_homed == false){
+                //Calibration: go to starting position set as 0 by the limit switches
+                if (SWITCH_0_L1_ON && l1_calib == false){
                     move_motor(PWM_M1, 0);
                     move_motor(PWM_M2, 625); //5% of duty cycle
-                    l1_homed = true;
+                    l1_calib = true;
+                    encoder_count[0] = 0; //Reset value of motor 1's encoder 
                     if (current_time - last_time >= 500000) { //500ms
                         set_servo_angle(90);
                         last_time = current_time;
                     }
                 }
-                if (SWITCH_0_L2_ON && l2_homed == false){
+                if (SWITCH_0_L2_ON && l2_calib == false){
                     move_motor(PWM_M2, 0);
-                    l2_homed = true;
+                    l2_calib = true;
+                    encoder_count[1] = 0; //Reset value of motor 2's encoder 
+                }
+                //After reaching this calibration position, start homing:
+                if (l1_calib && l2_calib){
+                    if(l2_homed == false){
+                        if (m2_moved == false){
+                            CCW_M2;
+                            move_motor(PWM_M2, 625);
+                            m2_moved = true;
+                        }
+                        encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+                        if (fabsf(target_M2_home - encoder_degrees_M2) < 1.0f){
+                            move_motor(PWM_M2, 0);
+                            l2_homed = true;
+                        }
+                    }
+                    if (l2_homed && l1_homed == false){
+                        if (m1_moved == false){
+                            CW_M1;
+                            move_motor(PWM_M1, 1250); 
+                            m1_moved = true;
+                        }
+                        encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+                        if (fabsf(target_M1_home - encoder_degrees_M1) < 1.0f){
+                            move_motor(PWM_M1, 0);
+                            l1_homed = true;
+                        }
+                    }
                 }
                 if (l1_homed && l2_homed){
                     current_state = STATE_IDLE;

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <std_msgs/msg/string.h>
 #include "pico/stdlib.h"

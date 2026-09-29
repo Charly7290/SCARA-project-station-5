@@ -11,10 +11,10 @@
 #define BIN1_DIR_M2 4 //D9, CW
 #define BIN2_DIR_M2 5 //D10, CCW
 
-#define ENCODER_A_M1 12
-#define ENCODER_B_M1 13
-#define ENCODER_A_M2 10
-#define ENCODER_B_M2 11
+#define ENCODER_A_M1 10
+#define ENCODER_B_M1 11
+#define ENCODER_A_M2 12
+#define ENCODER_B_M2 13
 
 #define TOOL 6 
 

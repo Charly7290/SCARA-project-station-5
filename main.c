@@ -146,7 +146,7 @@ int main(void){
     uint64_t last_time = time_us_64();
     scara_state_t last_reported_state = STATE_INIT;
     float encoder_degrees_M1, encoder_degrees_M2;
-    const float target_M2_home = 405.0f, target_M1_home = 90.0f; 
+    const float target_M2_home = 385.0f, target_M1_home = 210.0f; 
 
     current_state = STATE_IDLE;
     while(1){
@@ -169,7 +169,7 @@ int main(void){
                     CCW_M1;
                     CW_M2;
                     servo_home();
-                    move_motor(PWM_M1, 1250); //10% of duty cycle
+                    move_motor(PWM_M1, 875); //7% of duty cycle
                     l1_calib = false;
                     l1_homed = false;
                     l2_calib = false;
@@ -241,7 +241,7 @@ int main(void){
                     if (l2_homed == true && l1_homed == false){
                         if (m1_moved == false){
                             CW_M1;
-                            move_motor(PWM_M1, 1250); 
+                            move_motor(PWM_M1, 875); 
                             m1_moved = true;
                         }
                         encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks

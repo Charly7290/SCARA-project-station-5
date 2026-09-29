@@ -19,8 +19,9 @@
 #define SWITCH_1_L2_OFF (gpio_get(LIMIT_SWITCH_1_L2) == 1)
 
 void init_limitS(int pin);
-void encoder_a_irq_handler(uint gpio, uint32_t events);
-void init_encoder(int motor_index, int motor_encoderA, int motor_encoderB);
+void encoder_irq_handler(uint gpio, uint32_t events);
+void init_encoder_M1();
+void init_encoder_M2();
 void init_motor(int IN1, int IN2, int PWM_M);
 void move_motor(int pin_pwm, int dutyC);
 extern volatile int32_t encoder_count[2];

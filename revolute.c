@@ -11,68 +11,58 @@ void init_limitS(int pin){
 }
 
 // GPIO interrupt handler for Encoder A pin:
-void encoder_a_irq_handler(uint gpio, uint32_t events) {
-    if (gpio == pinA_m1 || gpio == pinB_m1) {
-        // Read both encoder A and B pins
-        bool encoder_a = gpio_get(pinA_m1);
-        bool encoder_b = gpio_get(pinB_m1);
-        // Determine direction based on the quadrature signals
-        // Count rising and falling edges of both A and B channels
-        if (gpio == pinA_m1) {
-            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
-                encoder_count[0]++; // Forward direction
-            } else {                 
-                encoder_count[0]--; // Reverse direction
-            }
+void encoder_irq_handler(uint gpio, uint32_t events) {
+    if (gpio == ENCODER_A_M1 || gpio == ENCODER_B_M1) {
+        bool encoder_a = gpio_get(ENCODER_A_M1);
+        bool encoder_b = gpio_get(ENCODER_B_M1);
+        if (gpio == ENCODER_A_M1) {
+            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) encoder_count[0]++;
+            else encoder_count[0]--;
         } else {
-            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
-                encoder_count[0]--; // Forward direction
-            } else {                 
-                encoder_count[0]++; // Reverse direction
-            }
+            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) encoder_count[0]--;
+            else encoder_count[0]++;
         }
-    } else if (gpio == pinA_m2 || gpio == pinB_m2) {
-        // Read both encoder A and B pins
-        bool encoder_a = gpio_get(pinA_m2);
-        bool encoder_b = gpio_get(pinB_m2);
-        // Determine direction based on the quadrature signals
-        // Count rising and falling edges of both A and B channels
-        if (gpio == pinA_m2) {
-            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
-                encoder_count[1]++; // Forward direction
-            } else {                 
-                encoder_count[1]--; // Reverse direction
-            }
+    } else if (gpio == ENCODER_A_M2 || gpio == ENCODER_B_M2) {
+        bool encoder_a = gpio_get(ENCODER_A_M2);
+        bool encoder_b = gpio_get(ENCODER_B_M2);
+        if (gpio == ENCODER_A_M2) {
+            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) encoder_count[1]++;
+            else encoder_count[1]--;
         } else {
-            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) {
-                encoder_count[1]--; // Forward direction
-            } else {                 
-                encoder_count[1]++; // Reverse direction
-            }
+            if ((encoder_a && !encoder_b) || (!encoder_a && encoder_b)) encoder_count[1]--;
+            else encoder_count[1]++;
         }
     }
 }
 
-void init_encoder(int motor_index, int motor_encoderA, int motor_encoderB){
-    if (motor_index == 1) {
-        pinA_m1 = motor_encoderA;
-        pinB_m1 = motor_encoderB;
-    } else {
-        pinA_m2 = motor_encoderA;
-        pinB_m2 = motor_encoderB;
-    }
+void init_encoder_M1(){
     // Initialize the GPIO pins connected to the encoder
-    gpio_init(motor_encoderA);
-    gpio_set_dir(motor_encoderA, GPIO_IN);
-    gpio_pull_up(motor_encoderA);
+    gpio_init(ENCODER_A_M1);
+    gpio_set_dir(ENCODER_A_M1, GPIO_IN);
+    gpio_pull_up(ENCODER_A_M1);
     // Initialize the GPIO pins connected to the encoder
-    gpio_init(motor_encoderB);
-    gpio_set_dir(motor_encoderB, GPIO_IN);
-    gpio_pull_up(motor_encoderB);
+    gpio_init(ENCODER_B_M1);
+    gpio_set_dir(ENCODER_B_M1, GPIO_IN);
+    gpio_pull_up(ENCODER_B_M1);
 
     // Attach interrupt on encoder A pin (rising and falling edge)
-    gpio_set_irq_enabled_with_callback(motor_encoderA, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &encoder_a_irq_handler);
-    gpio_set_irq_enabled_with_callback(motor_encoderB, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &encoder_a_irq_handler);
+    gpio_set_irq_enabled_with_callback(ENCODER_A_M1, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &encoder_irq_handler);
+    gpio_set_irq_enabled_with_callback(ENCODER_B_M1, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &encoder_irq_handler);
+}
+
+void init_encoder_M2(){
+    // Initialize the GPIO pins connected to the encoder
+    gpio_init(ENCODER_A_M2);
+    gpio_set_dir(ENCODER_A_M2, GPIO_IN);
+    gpio_pull_up(ENCODER_A_M2);
+    // Initialize the GPIO pins connected to the encoder
+    gpio_init(ENCODER_B_M2);
+    gpio_set_dir(ENCODER_B_M2, GPIO_IN);
+    gpio_pull_up(ENCODER_B_M2);
+
+    // Attach interrupt on encoder A pin (rising and falling edge)
+    gpio_set_irq_enabled_with_callback(ENCODER_A_M2, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &encoder_irq_handler);
+    gpio_set_irq_enabled_with_callback(ENCODER_B_M2, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &encoder_irq_handler);
 }
 
 void init_motor(int IN1, int IN2, int PWM_M){

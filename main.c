@@ -133,8 +133,8 @@ int main(void){
     init_limitS(LIMIT_SWITCH_1_L1);
     init_limitS(LIMIT_SWITCH_0_L2);
     init_limitS(LIMIT_SWITCH_1_L2);
-    init_encoder(1, ENCODER_A_M1, ENCODER_B_M1);
-    init_encoder(2, ENCODER_A_M2, ENCODER_B_M2);
+    init_encoder_M1();
+    init_encoder_M2();
     init_motor(AIN1_DIR_M1, AIN2_DIR_M1, PWM_M1);
     init_motor(BIN1_DIR_M2, BIN2_DIR_M2, PWM_M2);
     move_motor(PWM_M1, 0);
@@ -146,7 +146,7 @@ int main(void){
     uint64_t last_time = time_us_64();
     scara_state_t last_reported_state = STATE_INIT;
     float encoder_degrees_M1, encoder_degrees_M2;
-    const float target_M2_home = 180, target_M1_home = 270; 
+    const float target_M2_home = 405.0f, target_M1_home = 90.0f; 
 
     current_state = STATE_IDLE;
     while(1){
@@ -233,25 +233,30 @@ int main(void){
                             m2_moved = true;
                         }
                         encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
-                        if (fabsf(target_M2_home - encoder_degrees_M2) < 1.0f){
+                        if (fabsf(encoder_degrees_M2) >= target_M2_home){
                             move_motor(PWM_M2, 0);
                             l2_homed = true;
                         }
                     }
-                    if (l2_homed && l1_homed == false){
+                    if (l2_homed == true && l1_homed == false){
                         if (m1_moved == false){
                             CW_M1;
                             move_motor(PWM_M1, 1250); 
                             m1_moved = true;
                         }
                         encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
-                        if (fabsf(target_M1_home - encoder_degrees_M1) < 1.0f){
+                        if (fabsf(encoder_degrees_M1) == 0){
+                            gpio_put(LED_PIN, 1);
+                        }
+                        if (fabsf(encoder_degrees_M1) >= target_M1_home){
                             move_motor(PWM_M1, 0);
                             l1_homed = true;
                         }
                     }
                 }
                 if (l1_homed && l2_homed){
+                    encoder_count[0] = 0; //Home will be the new origin
+                    encoder_count[1] = 0; //Home will be the new origin
                     current_state = STATE_IDLE;
                 }
                 break;

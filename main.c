@@ -168,8 +168,9 @@ int main(void){
                     TOOL_OFF;
                     CCW_M1;
                     CW_M2;
+                    move_motor(PWM_M1, 0);
+                    move_motor(PWM_M2, 625); //5% of duty cycle
                     servo_home();
-                    move_motor(PWM_M1, 875); //7% of duty cycle
                     l1_calib = false;
                     l1_homed = false;
                     l2_calib = false;
@@ -209,20 +210,20 @@ int main(void){
                 break;
             case STATE_HOMING:
                 //Calibration: go to starting position set as 0 by the limit switches
+                if (SWITCH_0_L2_ON && l2_calib == false){
+                    move_motor(PWM_M2, 0);
+                    move_motor(PWM_M1, 875); //7% of duty cycle
+                    l2_calib = true;
+                    encoder_count[1] = 0; //Reset value of motor 2's encoder 
+                }
                 if (SWITCH_0_L1_ON && l1_calib == false){
                     move_motor(PWM_M1, 0);
-                    move_motor(PWM_M2, 625); //5% of duty cycle
                     l1_calib = true;
                     encoder_count[0] = 0; //Reset value of motor 1's encoder 
                     if (current_time - last_time >= 500000) { //500ms
                         set_servo_angle(90);
                         last_time = current_time;
                     }
-                }
-                if (SWITCH_0_L2_ON && l2_calib == false){
-                    move_motor(PWM_M2, 0);
-                    l2_calib = true;
-                    encoder_count[1] = 0; //Reset value of motor 2's encoder 
                 }
                 //After reaching this calibration position, start homing:
                 if (l1_calib && l2_calib){

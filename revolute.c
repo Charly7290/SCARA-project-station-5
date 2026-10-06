@@ -104,17 +104,14 @@ th calculateIK(float p_x, float p_y){ //px and py must be in cm
     // th1 is elbow up; th1_p is elbow down 
 
     //Possible collision with SCARA's base:
-    if (p_y < -14){
-        p_y = -14; //Right side, not to collide with the power supply on this side
-    }
-    if (p_x < -18){
-        p_x = -18;
-    }
-    if (p_y > 11){ //Left side
-        p_y = 11;
-    }
     if (p_x < -19){ 
         p_x = -19;
+    }
+    if (p_y > -14){
+        p_y = -14; //Right side, not to collide with the power supply on this side
+    }
+    if (p_y < 11){ //Left side
+        p_y = 11;
     }
 
     const float l1 = 15.0f, l2 = 15.5f; //Link lenghts, in cm

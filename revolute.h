@@ -25,3 +25,8 @@ void init_encoder_M2();
 void init_motor(int IN1, int IN2, int PWM_M);
 void move_motor(int pin_pwm, int dutyC);
 extern volatile int32_t encoder_count[2];
+typedef struct{
+    float theta1;
+    float theta2;
+} th;
+th calculateIK(float px, float py);

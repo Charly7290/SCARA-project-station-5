@@ -146,7 +146,11 @@ int main(void){
     uint64_t last_time = time_us_64();
     scara_state_t last_reported_state = STATE_INIT;
     float encoder_degrees_M1, encoder_degrees_M2;
-    const float target_M2_home = 385.0f, target_M1_home = 210.0f; 
+    //Due to the relationship between the pulleys: consider s=rθ
+    const float pulley_ratio_M1 = 40.0f/20.0f; 
+    const float pulley_ratio_M2 = 40.0f/15.0f;
+    const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 100.0f * pulley_ratio_M1; 
+    float angleM1, angleM2;
 
     current_state = STATE_IDLE;
     while(1){
@@ -161,6 +165,8 @@ int main(void){
                         gpio_put(LED_PIN, 0);
                         sleep_ms(125);
                     }
+                    m1_moved = false;
+                    m2_moved = false;
                     TOOL_OFF;
                     //waiting for a message to change state...
                     break;
@@ -183,8 +189,17 @@ int main(void){
 
                     break;
                 case STATE_PICK_CASE:
-
-
+                    th anglesM= calculateIK(21.0f, 10.0f);
+                    angleM1 = anglesM.theta1;
+                    angleM2 = anglesM.theta2;
+                    if(angleM1 == 180.0f && angleM2 == 180.0f){ //Out of joint limitations
+                        move_motor(PWM_M1,0);
+                        move_motor(PWM_M2,0);
+                        current_state = STATE_IDLE;
+                    } else {
+                        move_motor(PWM_M1, 875);
+                        move_motor(PWM_M2, 625);
+                    }
                     break;
                 case STATE_PLACE_CASE:
 
@@ -216,7 +231,7 @@ int main(void){
                     l2_calib = true;
                     encoder_count[1] = 0; //Reset value of motor 2's encoder 
                 }
-                if (SWITCH_0_L1_ON && l1_calib == false){
+                if (SWITCH_0_L1_ON && l1_calib == false && l2_calib == true){
                     move_motor(PWM_M1, 0);
                     l1_calib = true;
                     encoder_count[0] = 0; //Reset value of motor 1's encoder 
@@ -246,9 +261,6 @@ int main(void){
                             m1_moved = true;
                         }
                         encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
-                        if (fabsf(encoder_degrees_M1) == 0){
-                            gpio_put(LED_PIN, 1);
-                        }
                         if (fabsf(encoder_degrees_M1) >= target_M1_home){
                             move_motor(PWM_M1, 0);
                             l1_homed = true;
@@ -262,7 +274,15 @@ int main(void){
                 }
                 break;
             case STATE_PICK_CASE:
-
+                encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+                if (fabsf(encoder_degrees_M1) >= angleM1){
+                    move_motor(PWM_M1, 0);
+                }
+                encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+                if (fabsf(encoder_degrees_M2) >= angleM2){
+                    move_motor(PWM_M2, 0);
+                }
+                current_state = STATE_IDLE;
                 //current_state = STATE_PLACE_CASE;
                 break;
             case STATE_PLACE_CASE:

@@ -98,3 +98,70 @@ void move_motor(int pin_pwm, int dutyC){
     uint slice_num = pwm_gpio_to_slice_num(pin_pwm);
     pwm_set_chan_level(slice_num, pwm_gpio_to_channel(pin_pwm), dutyC);
 }
+
+th calculateIK(float p_x, float p_y){ //px and py must be in cm
+    th anglesIK;
+    // th1 is elbow up; th1_p is elbow down 
+
+    //Possible collision with SCARA's base:
+    if (p_y < -14){
+        p_y = -14; //Right side, not to collide with the power supply on this side
+    }
+    if (p_x < -18){
+        p_x = -18;
+    }
+    if (p_y > 11){ //Left side
+        p_y = 11;
+    }
+    if (p_x < -19){ 
+        p_x = -19;
+    }
+
+    const float l1 = 15.0f, l2 = 15.5f; //Link lenghts, in cm
+    float r = sqrtf(powf(p_x, 2.0f) + powf(p_y, 2.0f));
+    float alpha = atan2f(p_y,p_x);
+    float th1, th2_p, th1_p, th2, phi;
+
+    phi = (powf(r, 2.0f)-powf(l1, 2.0f)-powf(l2, 2.0f))/(2*l1*l2);
+    th1 = alpha + acosf((powf(r, 2.0f)+powf(l1, 2.0f)-powf(l2, 2.0f))/(2.0f*l1*r));
+    th2_p = -acos(phi);
+    th1_p = alpha - acosf((powf(r, 2.0f)+powf(l1, 2.0f)-powf(l2, 2.0f))/(2.0f*l1*r));
+    th2 = -th2_p;
+    if (isnan(th1) || isnan(th1_p) || isnan(th2) || isnan(th2_p)) {  // target unreachable
+      anglesIK.theta1 = 180.0f;
+      anglesIK.theta2 = 180.0f;
+      return anglesIK;
+    } else {
+        th1 = th1 * (180.0f / (float)M_PI);
+        th2_p = th2_p * (180.0f / (float)M_PI);
+        th1_p = th1_p * (180.0f / (float)M_PI);
+        th2 = th2 * (180.0f / (float)M_PI);
+    }
+
+    //Out of joint limitations:
+    if(th1 < -105.9f || th1 > 105.9f){ //link 1
+        th1 = 180.0f;
+    }
+    if(th1_p < -105.9f || th1_p > 105.9f){ 
+        th1_p = 180.0f;
+    }
+    if(th2 > 130.0f){ //link 2
+        th2 = 180.0f;
+    }
+    if(th2_p < -130.0f){
+        th2_p = 180.0f;
+    }
+
+    //Direction of Motors: (it needs an improvement so that the direction depends on the shortest path)***
+    if(th1 < 0.0f) { // Left side of SCARA
+        CCW_M1;
+        anglesIK.theta2 = fabsf(th2_p);
+        anglesIK.theta1 = fabsf(th1);
+    } else if(th1_p > 0.0f) { // Right side of SCARA
+        CW_M1;
+        anglesIK.theta2 = fabsf(th2);
+        anglesIK.theta1 = th1_p;
+    }
+
+    return anglesIK;
+}

@@ -104,14 +104,14 @@ th calculateIK(float p_x, float p_y){ //px and py must be in cm
     // th1 is elbow up; th1_p is elbow down 
 
     //Possible collision with SCARA's base:
-    if (p_x < -19){ 
-        p_x = -19;
+    if (p_x < -19.0f && p_x > 0.0f){ 
+        p_x = -19.0f;
     }
-    if (p_y > -14){
-        p_y = -14; //Right side, not to collide with the power supply on this side
+    if (p_y > -14.0f && p_y < 0.0f){
+        p_y = -14.0f; //Right side, not to collide with the power supply on this side
     }
-    if (p_y < 11){ //Left side
-        p_y = 11;
+    if (p_y < 11.0f && p_y > 0.0f){ //Left side
+        p_y = 11.0f;
     }
 
     const float l1 = 15.0f, l2 = 15.5f; //Link lenghts, in cm
@@ -150,14 +150,16 @@ th calculateIK(float p_x, float p_y){ //px and py must be in cm
     }
 
     //Direction of Motors: (it needs an improvement so that the direction depends on the shortest path)***
-    if(th1 < 0.0f) { // Left side of SCARA
+    if(p_y < 0) { // Left side of SCARA
         CCW_M1;
+        CCW_M2;
         anglesIK.theta2 = fabsf(th2_p);
         anglesIK.theta1 = fabsf(th1);
-    } else if(th1_p > 0.0f) { // Right side of SCARA
+    } else if(p_y > 0) { // Right side of SCARA
         CW_M1;
+        CW_M2;
         anglesIK.theta2 = fabsf(th2);
-        anglesIK.theta1 = th1_p;
+        anglesIK.theta1 = fabsf(th1_p);
     }
 
     return anglesIK;

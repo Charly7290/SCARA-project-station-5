@@ -151,7 +151,7 @@ int main(void){
     const float pulley_ratio_M1 = 60.0f/28.0f; // based on the timing pulley teeth
     const float pulley_ratio_M2 = 60.0f/20.0f; // based on the timing pulley teeth 
     const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 100.0f * pulley_ratio_M1; 
-    float angleM1, angleM2;
+    float angleM1, angleM2, angleServo;
 
     current_state = STATE_IDLE;
     while(1){
@@ -190,7 +190,7 @@ int main(void){
 
                     break;
                 case STATE_TEST_IK:
-                    th anglesM= calculateIK(-10.0f, -20.0f);
+                    th anglesM= calculateIK(-10.0f, -20.0f, 5.0f);
                     angleM1 = anglesM.theta1;
                     angleM2 = anglesM.theta2;
                     if(angleM1 == 180.0f && angleM2 == 180.0f){ //Out of joint limitations
@@ -201,7 +201,7 @@ int main(void){
                         move_motor(PWM_M1, 1000);
                         move_motor(PWM_M2, 625);
                     }
-                    set_servo_angle(180);
+                    set_servo_angle(anglesM.theta_prism);
                     break;
                 case STATE_PICK_CASE:
                     

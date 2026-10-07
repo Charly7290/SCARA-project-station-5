@@ -99,7 +99,7 @@ void move_motor(int pin_pwm, int dutyC){
     pwm_set_chan_level(slice_num, pwm_gpio_to_channel(pin_pwm), dutyC);
 }
 
-th calculateIK(float p_x, float p_y){ //px and py must be in cm
+th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     th anglesIK;
     // th1 is elbow up; th1_p is elbow down 
 
@@ -114,6 +114,7 @@ th calculateIK(float p_x, float p_y){ //px and py must be in cm
         p_y = 11.0f;
     }
 
+    //  XY-Plane:
     const float l1 = 15.0f, l2 = 15.5f; //Link lenghts, in cm
     float r = sqrtf(powf(p_x, 2.0f) + powf(p_y, 2.0f));
     float alpha = atan2f(p_y,p_x);
@@ -160,6 +161,17 @@ th calculateIK(float p_x, float p_y){ //px and py must be in cm
         CW_M2;
         anglesIK.theta2 = fabsf(th2);
         anglesIK.theta1 = fabsf(th1_p);
+    }
+
+    // Z-axis movement, measured considering the tip of the tool:
+    const float pz_home = 6.95f, gear_radius = 4.05f/2.0f; //cm
+    float dist = pz_home - p_z;
+    anglesIK.theta_prism = (dist / gear_radius) * 180.0f / (float)M_PI;
+    if(anglesIK.theta_prism < 0.0f){
+        anglesIK.theta_prism = 0.0f;
+    }
+    if(anglesIK.theta_prism > 180.0f){
+        anglesIK.theta_prism = 180.0f;
     }
 
     return anglesIK;

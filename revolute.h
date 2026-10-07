@@ -28,5 +28,6 @@ extern volatile int32_t encoder_count[2];
 typedef struct{
     float theta1;
     float theta2;
+    float theta_prism;
 } th;
-th calculateIK(float px, float py);
+th calculateIK(float p_x, float p_y, float p_z);

@@ -18,3 +18,5 @@ void servo_jog_up(void);   // Manual jog: Z up, decrease servo angle by SERVO_JO
 void servo_jog_down(void); // Manual jog: Z down, increase servo angle by SERVO_JOG_STEP_DEG
 void set_servo_angle(int angle_deg);
 void servo_move_rate(float deg_per_s, float dt_s); // Smooth jog: angle += deg_per_s * dt_s
+
+

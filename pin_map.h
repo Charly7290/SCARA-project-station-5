@@ -29,3 +29,5 @@
 #define SERVO_JOG_STEP_DEG 10  // Degrees per J3_UP/J3_DOWN command
 
 #define MANUAL_CMD_TIMEOUT_MS 400 // Dead-man's switch: stop M1/M2 if no jog command arrives in this time
+
+

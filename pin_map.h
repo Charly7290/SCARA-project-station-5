@@ -2,7 +2,7 @@
 
 //  GPIOs:
 #define LED_PIN 25 //buil-in LED
-#define PWM_SERVO 0 
+#define PWM_SERVO 0
 
 #define PWM_M1 2 //D6
 #define PWM_M2 3 //D11
@@ -16,7 +16,7 @@
 #define ENCODER_A_M2 12
 #define ENCODER_B_M2 13
 
-#define TOOL 6 
+#define TOOL 6
 
 #define LIMIT_SWITCH_0_L1 18 //Start, link 1
 #define LIMIT_SWITCH_1_L1 19 //End, link 1
@@ -25,5 +25,7 @@
 
 // Manual-jog test tuning
 #define MANUAL_JOG_DUTY_M1 1000   // PWM duty for M1
-#define MANUAL_JOG_DUTY_M2 625  // PWM duty for M2
+#define MANUAL_JOG_DUTY_M2 1000  // PWM duty for M2
 #define SERVO_JOG_STEP_DEG 10  // Degrees per J3_UP/J3_DOWN command
+
+#define MANUAL_CMD_TIMEOUT_MS 400 // Dead-man's switch: stop M1/M2 if no jog command arrives in this time

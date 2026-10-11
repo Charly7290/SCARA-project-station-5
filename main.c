@@ -16,6 +16,10 @@ rcl_subscription_t subscriber;
 //A string message for States:
 std_msgs__msg__String msg;
 char buffer[64];
+float coord_x = 0.0f;
+float coord_y = 0.0f;
+float coord_z = 0.0f;
+bool robot_homed = false;
 
 typedef enum { //States
     STATE_INIT,
@@ -33,20 +37,34 @@ volatile scara_state_t current_state = STATE_INIT;
 
 void cmd_callback(const void *msgin) {
     const std_msgs__msg__String *m = (const std_msgs__msg__String *)msgin;
-    const char *cmd = m->data.data;
+    char cmd[65];
+    if (m->data.size >= sizeof(cmd)) {
+        return;
+    }
+    memcpy(cmd, m->data.data, m->data.size);
+    cmd[m->data.size] = '\0';
 
     if (strcmp(cmd, "HOME") == 0) {
         // Stop any in-progress manual jog before handing control to the homing routine
         move_motor(PWM_M1, 0);
         move_motor(PWM_M2, 0);
+        robot_homed = false;
         current_state = STATE_HOMING;
     } else if (strcmp(cmd, "MANUAL") == 0) {
         current_state = STATE_MANUAL;
-    } else if (strcmp(cmd, "TEST_IK") == 0) {
-        move_motor(PWM_M1, 0);
-        move_motor(PWM_M2, 0);
-        current_state = STATE_TEST_IK;
-    // Manual jog commands (only honored while in STATE_MANUAL) 
+    
+    } else if (strncmp(cmd, "PUNTO,", 6) == 0) {
+        float x, y, z;
+        char extra;
+
+        int result = sscanf(cmd, "PUNTO,%f,%f,%f %c", &x, &y, &z, &extra);
+
+        if (result == 3 && isfinite(x) && isfinite(y) && isfinite(z) && robot_homed && current_state == STATE_IDLE) {
+            coord_x = x;
+            coord_y = y;
+            coord_z = z;
+            current_state = STATE_TEST_IK;
+        }
     } else if (strcmp(cmd, "J1_CW") == 0) {
         if (current_state == STATE_MANUAL) { CW_M1; move_motor(PWM_M1, MANUAL_JOG_DUTY_M1); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
@@ -150,14 +168,27 @@ int main(void){
     //Due to the relationship between the pulleys: consider s=rθ
     const float pulley_ratio_M1 = 60.0f/28.0f; // based on the timing pulley teeth
     const float pulley_ratio_M2 = 60.0f/20.0f; // based on the timing pulley teeth 
-    const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 100.0f * pulley_ratio_M1; 
+    const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 109.3f * pulley_ratio_M1; 
     float angleM1, angleM2, angleServo;
 
+
+    //puntoapunto
+    const float tolerance = 2.0f;  // Grados articulares
+    uint64_t goto_start_time = 0;
+    const uint64_t goto_timeout_us = 15000000ULL;
+
+    // Valores provisionales, pendientes de calibración
+    const float encoder_sign_M1 = -1.0f;
+    const float encoder_sign_M2 = -1.0f;
+
+    const bool positive_cw_M1 = true;
+    const bool positive_cw_M2 = true;
     current_state = STATE_IDLE;
     while(1){
         uint64_t current_time = time_us_64();
         rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)); //each call waits up to 100ms for a new message from publisher
         if(current_state != last_reported_state){ //To run anything once
+            scara_state_t entered_state = current_state;
             switch(current_state){
                 case STATE_IDLE:
                     for (int i = 0; i < 4; i++){
@@ -171,12 +202,13 @@ int main(void){
                     TOOL_OFF;
                     //waiting for a message to change state...
                     break;
-                case STATE_HOMING:
+                 case STATE_HOMING:
                     TOOL_OFF;
                     CCW_M1;
                     CW_M2;
                     move_motor(PWM_M1, 0);
-                    move_motor(PWM_M2, 625); //5% of duty cycle
+                    STOP_M1;
+                    move_motor(PWM_M2, 700); //5% of duty cycle
                     servo_home();
                     l1_calib = false;
                     l1_homed = false;
@@ -190,16 +222,19 @@ int main(void){
 
                     break;
                 case STATE_TEST_IK:
-                    th anglesM= calculateIK(-10.0f, -20.0f, 5.0f);
+                    th anglesM = calculateIK(coord_x, coord_y, coord_z);
                     angleM1 = anglesM.theta1;
                     angleM2 = anglesM.theta2;
-                    if(angleM1 == 180.0f && angleM2 == 180.0f){ //Out of joint limitations
+                    if(!isfinite(angleM1) || !isfinite(angleM2) || angleM1 == 180.0f || angleM2 == 180.0f){ //Out of joint limitations
                         move_motor(PWM_M1,0);
+                        STOP_M1;
                         move_motor(PWM_M2,0);
+                        STOP_M2;
                         current_state = STATE_IDLE;
                     } else {
-                        move_motor(PWM_M1, 1000);
-                        move_motor(PWM_M2, 625);
+                        m1_moved = false;
+                        m2_moved = false;
+                        goto_start_time = time_us_64();
                     }
                     set_servo_angle(anglesM.theta_prism);
                     break;
@@ -222,7 +257,7 @@ int main(void){
                 default: //just in case
                     break;
             }
-            last_reported_state = current_state;
+            last_reported_state = entered_state;
         }
         switch(current_state){ //TO run continuously
             case STATE_MANUAL:
@@ -233,12 +268,15 @@ int main(void){
                 //Calibration: go to starting position set as 0 by the limit switches
                 if (SWITCH_0_L2_ON && l2_calib == false){
                     move_motor(PWM_M2, 0);
+                    STOP_M2;
+                    CCW_M1;
                     move_motor(PWM_M1, 1000); //8% of duty cycle
                     l2_calib = true;
                     encoder_count[1] = 0; //Reset value of motor 2's encoder 
                 }
                 if (SWITCH_0_L1_ON && l1_calib == false && l2_calib == true){
                     move_motor(PWM_M1, 0);
+                    STOP_M1;
                     l1_calib = true;
                     encoder_count[0] = 0; //Reset value of motor 1's encoder 
                 }
@@ -253,18 +291,20 @@ int main(void){
                         encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
                         if (fabsf(encoder_degrees_M2) >= target_M2_home){
                             move_motor(PWM_M2, 0);
+                            STOP_M2;
                             l2_homed = true;
                         }
                     }
                     if (l2_homed == true && l1_homed == false){
                         if (m1_moved == false){
                             CW_M1;
-                            move_motor(PWM_M1, 1000); 
+                            move_motor(PWM_M1, 800); 
                             m1_moved = true;
                         }
                         encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
                         if (fabsf(encoder_degrees_M1) >= target_M1_home){
                             move_motor(PWM_M1, 0);
+                            STOP_M1;
                             l1_homed = true;
                         }
                     }
@@ -272,23 +312,68 @@ int main(void){
                 if (l1_homed && l2_homed){
                     encoder_count[0] = 0; //Home will be the new origin
                     encoder_count[1] = 0; //Home will be the new origin
+                    robot_homed = true;
                     current_state = STATE_IDLE;
                 }
                 break;
             case STATE_TEST_IK:
-                encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
-                if (m1_moved == false && fabsf(encoder_degrees_M1) >= (angleM1 * pulley_ratio_M1)){
+
+                if (time_us_64() - goto_start_time >= goto_timeout_us) {
                     move_motor(PWM_M1, 0);
-                    m1_moved = true;
-                }
-                encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
-                if (m2_moved == false && fabsf(encoder_degrees_M2) >= (angleM2 * pulley_ratio_M2)){
+                    STOP_M1;
                     move_motor(PWM_M2, 0);
-                    m2_moved = true;
+                    STOP_M2;
+                    current_state = STATE_IDLE;
+                    break;
                 }
+
+                // Para M1:
+                encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+                float actual_M1 = encoder_sign_M1 * encoder_degrees_M1 / pulley_ratio_M1;
+                float error_M1 = angleM1 - actual_M1;
+
+                if (fabsf(error_M1) <= tolerance){
+                    move_motor(PWM_M1, 0);
+                    STOP_M1;
+                    m1_moved = true;
+                } else { 
+                    m1_moved = false;
+                     if ((error_M1 > 0.0f) == positive_cw_M1) {
+                        CW_M1;
+                    } else {
+                        CCW_M1;
+                    }
+                    move_motor(PWM_M1, 1000);
+                }
+
+                //Para M2 :D
+                encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+                float actual_M2 = encoder_sign_M2 * encoder_degrees_M2 / pulley_ratio_M2;
+                float error_M2 = angleM2 - actual_M2;
+
+                if (fabsf(error_M2) <= tolerance){
+                    move_motor(PWM_M2, 0);
+                    STOP_M2;
+                    m2_moved = true;
+                } else {
+                    m2_moved = false;
+                    if ((error_M2 > 0.0f) == positive_cw_M2) {
+                        CW_M2;
+                    } else {
+                        CCW_M2;
+                    }
+                    move_motor(PWM_M2, 650);
+                }
+
+
                 if(m1_moved && m2_moved){
+                    move_motor(PWM_M1, 0);
+                    STOP_M1;
+                    move_motor(PWM_M2, 0);
+                    STOP_M2;
                     current_state = STATE_IDLE;
                 }
+
                 break;
             case STATE_PICK_CASE:
                 //current_state = STATE_PLACE_CASE;

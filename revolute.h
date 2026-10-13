@@ -8,6 +8,9 @@
 #define CCW_M2 (gpio_put(BIN1_DIR_M2, 0), gpio_put(BIN2_DIR_M2, 1))
 #define CW_M2 (gpio_put(BIN1_DIR_M2, 1), gpio_put(BIN2_DIR_M2, 0))
 
+#define STOP_M2 (gpio_put(BIN1_DIR_M2, 1), gpio_put(BIN2_DIR_M2, 1))
+#define STOP_M1 (gpio_put(AIN1_DIR_M1, 1), gpio_put(AIN2_DIR_M1, 1))
+
 // Inverse logic because of pull-up resistor from the switch module:
 #define SWITCH_0_L1_ON (gpio_get(LIMIT_SWITCH_0_L1) == 0)
 #define SWITCH_0_L1_OFF (gpio_get(LIMIT_SWITCH_0_L1) == 1)

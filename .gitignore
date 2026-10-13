@@ -1,3 +1,5 @@
 build/
 libmicroros/
 libmicroros/
+__pycache__/
+*.pyc

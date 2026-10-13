@@ -104,7 +104,7 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     // th1 is elbow up; th1_p is elbow down 
 
     //Possible collision with SCARA's base:
-    if (p_x < -19.0f && p_x > 0.0f){ 
+    if (p_x < -19.0f){ 
         p_x = -19.0f;
     }
     if (p_y > -14.0f && p_y < 0.0f){
@@ -128,6 +128,7 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     if (isnan(th1) || isnan(th1_p) || isnan(th2) || isnan(th2_p)) {  // target unreachable
       anglesIK.theta1 = 180.0f;
       anglesIK.theta2 = 180.0f;
+
       return anglesIK;
     } else {
         th1 = th1 * (180.0f / (float)M_PI);
@@ -152,15 +153,21 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
 
     //Direction of Motors: (it needs an improvement so that the direction depends on the shortest path)***
     if(p_y < 0) { // Left side of SCARA
-        CCW_M1;
-        CCW_M2;
-        anglesIK.theta2 = fabsf(th2_p);
-        anglesIK.theta1 = fabsf(th1);
-    } else if(p_y > 0) { // Right side of SCARA
-        CW_M1;
-        CW_M2;
-        anglesIK.theta2 = fabsf(th2);
-        anglesIK.theta1 = fabsf(th1_p);
+        anglesIK.theta2 = th2_p;
+        anglesIK.theta1 = th1;
+    } else { // Right side of SCARA, including p_y == 0
+        anglesIK.theta2 = th2;
+        anglesIK.theta1 = th1_p;
+    }
+
+    // Check selected joint angles
+    if (anglesIK.theta1 == 180.0f ||
+        anglesIK.theta2 == 180.0f) {
+
+        anglesIK.theta1 = 180.0f;
+        anglesIK.theta2 = 180.0f;
+
+        return anglesIK;
     }
 
     // Z-axis movement, measured considering the tip of the tool:

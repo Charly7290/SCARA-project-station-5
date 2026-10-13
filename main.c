@@ -1,6 +1,7 @@
 #include "system_lib.h"
 #include "prismatic.h"
 #include "revolute.h"
+#include <stdlib.h> //atoi()
 
 // Micro-ROS core and RCL (ROS Client Library) includes
 #include <rcl/rcl.h>
@@ -35,6 +36,87 @@ typedef enum { //States
 } scara_state_t;
 volatile scara_state_t current_state = STATE_INIT;
 
+//Dead-man's switch: time (us) of the last jog command in MANUAL
+static volatile uint64_t last_manual_cmd_time = 0;
+
+//Smooth J3 (J3_SPEED): servo rate in deg/s, positive = Z down
+static volatile float j3_rate_dps = 0.0f;
+static uint64_t j3_last_us = 0;
+
+//  LIMIT SWITCH PROTECTION (MANUAL):
+//Moving towards a pressed switch is blocked until the operator releases
+//Limit switch reached in each direction:
+#define M1_CW_LIMIT_HIT   SWITCH_1_L1_ON   //End, link 1
+#define M1_CCW_LIMIT_HIT  SWITCH_0_L1_ON   //Start, link 1
+#define M2_CW_LIMIT_HIT   SWITCH_0_L2_ON   //Start, link 2
+#define M2_CCW_LIMIT_HIT  SWITCH_1_L2_ON   //End, link 2
+
+#define DIR_STOP 0
+#define DIR_CW   1
+#define DIR_CCW  (-1)
+
+static volatile int  jog_dir[2]       = {DIR_STOP, DIR_STOP}; //[0] = M1, [1] = M2
+static volatile bool jog_block_cw[2]  = {false, false};       //CW blocked until released
+static volatile bool jog_block_ccw[2] = {false, false};       //CCW blocked until released
+
+static bool jog_limit_hit(int motor, int dir){
+    if (motor == 0) return (dir == DIR_CW) ? M1_CW_LIMIT_HIT : M1_CCW_LIMIT_HIT;
+    else            return (dir == DIR_CW) ? M2_CW_LIMIT_HIT : M2_CCW_LIMIT_HIT;
+}
+
+static void jog_stop_motor(int motor){
+    move_motor(motor == 0 ? PWM_M1 : PWM_M2, 0);
+    jog_dir[motor] = DIR_STOP;
+}
+
+//Moves M1/M2 in MANUAL, checking the limit switches
+static void jog_motor(int motor, int dir, int duty){
+    if (dir == DIR_STOP || duty <= 0) {
+        //Released: unblock both directions
+        jog_block_cw[motor] = false;
+        jog_block_ccw[motor] = false;
+        jog_stop_motor(motor);
+        return;
+    }
+    //Moving one way unblocks the other one
+    if (dir == DIR_CW) jog_block_ccw[motor] = false;
+    else               jog_block_cw[motor]  = false;
+
+    volatile bool *block = (dir == DIR_CW) ? &jog_block_cw[motor] : &jog_block_ccw[motor];
+    if (*block || jog_limit_hit(motor, dir)) {
+        *block = true;
+        jog_stop_motor(motor);
+        return;
+    }
+
+    if (motor == 0) { if (dir == DIR_CW) CW_M1; else CCW_M1; }
+    else            { if (dir == DIR_CW) CW_M2; else CCW_M2; }
+    move_motor(motor == 0 ? PWM_M1 : PWM_M2, duty);
+    jog_dir[motor] = dir;
+}
+
+//Stops a joint when it reaches a limit switch (called every loop in MANUAL)
+static void jog_limit_guard(void){
+    for (int motor = 0; motor < 2; motor++) {
+        int dir = jog_dir[motor];
+        if (dir != DIR_STOP && jog_limit_hit(motor, dir)) {
+            if (dir == DIR_CW) jog_block_cw[motor] = true;
+            else               jog_block_ccw[motor] = true;
+            jog_stop_motor(motor);
+        }
+    }
+}
+
+//Speed from -100 to 100 %
+static void jog_motor_percent(int motor, int percent, int max_duty){
+    if (percent > 100) percent = 100;
+    if (percent < -100) percent = -100;
+    if (percent == 0) { jog_motor(motor, DIR_STOP, 0); return; }
+    int mag = percent > 0 ? percent : -percent;
+    jog_motor(motor, percent > 0 ? DIR_CW : DIR_CCW,
+              (int)(((float)mag / 100.0f) * max_duty));
+}
+
 void cmd_callback(const void *msgin) {
     const std_msgs__msg__String *m = (const std_msgs__msg__String *)msgin;
     char cmd[65];
@@ -66,28 +148,55 @@ void cmd_callback(const void *msgin) {
             current_state = STATE_TEST_IK;
         }
     } else if (strcmp(cmd, "J1_CW") == 0) {
-        if (current_state == STATE_MANUAL) { CW_M1; move_motor(PWM_M1, MANUAL_JOG_DUTY_M1); }
+        if (current_state == STATE_MANUAL) { last_manual_cmd_time = time_us_64(); jog_motor(0, DIR_CW, MANUAL_JOG_DUTY_M1); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J1_CCW") == 0) {
-        if (current_state == STATE_MANUAL) { CCW_M1; move_motor(PWM_M1, MANUAL_JOG_DUTY_M1); }
+        if (current_state == STATE_MANUAL) { last_manual_cmd_time = time_us_64(); jog_motor(0, DIR_CCW, MANUAL_JOG_DUTY_M1); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J1_STOP") == 0) {
-        if (current_state == STATE_MANUAL) { move_motor(PWM_M1, 0); }
+        if (current_state == STATE_MANUAL) { last_manual_cmd_time = time_us_64(); jog_motor(0, DIR_STOP, 0); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J2_CW") == 0) {
-        if (current_state == STATE_MANUAL) { CW_M2; move_motor(PWM_M2, MANUAL_JOG_DUTY_M2); }
+        if (current_state == STATE_MANUAL) { last_manual_cmd_time = time_us_64(); jog_motor(1, DIR_CW, MANUAL_JOG_DUTY_M2); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J2_CCW") == 0) {
-        if (current_state == STATE_MANUAL) { CCW_M2; move_motor(PWM_M2, MANUAL_JOG_DUTY_M2); }
+        if (current_state == STATE_MANUAL) { last_manual_cmd_time = time_us_64(); jog_motor(1, DIR_CCW, MANUAL_JOG_DUTY_M2); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J2_STOP") == 0) {
-        if (current_state == STATE_MANUAL) { move_motor(PWM_M2, 0); }
+        if (current_state == STATE_MANUAL) { last_manual_cmd_time = time_us_64(); jog_motor(1, DIR_STOP, 0); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J3_UP") == 0) {
-        if (current_state == STATE_MANUAL) { servo_jog_up(); }
+        if (current_state == STATE_MANUAL) { last_manual_cmd_time = time_us_64(); servo_jog_up(); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else if (strcmp(cmd, "J3_DOWN") == 0) {
-        if (current_state == STATE_MANUAL) { servo_jog_down(); }
+        if (current_state == STATE_MANUAL) { last_manual_cmd_time = time_us_64(); servo_jog_down(); }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
+    //Speed commands from the controller, from -100 to 100 %
+    } else if (strncmp(cmd, "J1_SPEED:", 9) == 0) {
+        if (current_state == STATE_MANUAL) {
+            last_manual_cmd_time = time_us_64();
+            jog_motor_percent(0, atoi(cmd + 9), MANUAL_JOG_DUTY_M1);
+        } else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strncmp(cmd, "J2_SPEED:", 9) == 0) {
+        if (current_state == STATE_MANUAL) {
+            last_manual_cmd_time = time_us_64();
+            jog_motor_percent(1, atoi(cmd + 9), MANUAL_JOG_DUTY_M2);
+        } else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strncmp(cmd, "J3_SPEED:", 9) == 0) {
+        //Positive = Z up
+        if (current_state == STATE_MANUAL) {
+            last_manual_cmd_time = time_us_64();
+            int percent = atoi(cmd + 9);
+            if (percent > 100) percent = 100;
+            if (percent < -100) percent = -100;
+            j3_rate_dps = -((float)percent / 100.0f) * SERVO_JOG_SPEED_DPS;
+        } else printf("Ignored %s: send MANUAL first.\n", cmd);
+    //Vacuum tool (not stopped by the dead-man's switch)
+    } else if (strcmp(cmd, "TOOL_ON") == 0) {
+        if (current_state == STATE_MANUAL) { TOOL_ON; }
+        else printf("Ignored %s: send MANUAL first.\n", cmd);
+    } else if (strcmp(cmd, "TOOL_OFF") == 0) {
+        if (current_state == STATE_MANUAL) { TOOL_OFF; }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
     } else {
         printf("Unknown state: %s\n", cmd);
@@ -185,8 +294,7 @@ int main(void){
     const bool positive_cw_M2 = true;
     current_state = STATE_IDLE;
     while(1){
-        uint64_t current_time = time_us_64();
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)); //each call waits up to 100ms for a new message from publisher
+        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10)); //each call waits up to 10ms for a new message from publisher
         if(current_state != last_reported_state){ //To run anything once
             scara_state_t entered_state = current_state;
             switch(current_state){
@@ -219,7 +327,15 @@ int main(void){
                     break;
                 case STATE_MANUAL:
                     TOOL_OFF;
-
+                    last_manual_cmd_time = time_us_64(); //Reset dead-man's switch
+                    //Reset jog and limit switch state
+                    for (int i = 0; i < 2; i++) {
+                        jog_dir[i] = DIR_STOP;
+                        jog_block_cw[i] = false;
+                        jog_block_ccw[i] = false;
+                    }
+                    j3_rate_dps = 0.0f;
+                    j3_last_us = time_us_64();
                     break;
                 case STATE_TEST_IK:
                     th anglesM = calculateIK(coord_x, coord_y, coord_z);
@@ -239,8 +355,8 @@ int main(void){
                     set_servo_angle(anglesM.theta_prism);
                     break;
                 case STATE_PICK_CASE:
-                    
-                    
+
+
                     break;
                 case STATE_PLACE_CASE:
 
@@ -260,10 +376,27 @@ int main(void){
             last_reported_state = entered_state;
         }
         switch(current_state){ //TO run continuously
-            case STATE_MANUAL:
-                // Jog commands (J1_CW/J1_CCW/J1_STOP, J2_*, J3_UP/J3_DOWN) are handled directly in cmd_callback() as they arrive.
-                //current_state = STATE_IDLE;
+            case STATE_MANUAL: {
+                // Jog commands are handled directly in cmd_callback() as they arrive.
+                //Dead-man's switch: stop if no jog command arrived in MANUAL_CMD_TIMEOUT_MS
+                uint64_t now = time_us_64(); //read here, not before spin_some (avoids underflow)
+                if (now >= last_manual_cmd_time &&
+                    (now - last_manual_cmd_time) > (uint64_t)MANUAL_CMD_TIMEOUT_MS * 1000){
+                    jog_stop_motor(0);
+                    jog_stop_motor(1);
+                    j3_rate_dps = 0.0f;
+                }
+                //Smooth J3: move the servo by rate * elapsed time (dt limited to 50 ms)
+                {
+                    uint64_t t = time_us_64();
+                    float dt = (float)(t - j3_last_us) / 1e6f;
+                    j3_last_us = t;
+                    if (dt > 0.05f) dt = 0.05f;
+                    servo_move_rate(j3_rate_dps, dt);
+                }
+                jog_limit_guard(); //Limit switch protection
                 break;
+            }
             case STATE_HOMING:
                 //Calibration: go to starting position set as 0 by the limit switches
                 if (SWITCH_0_L2_ON && l2_calib == false){
@@ -272,13 +405,13 @@ int main(void){
                     CCW_M1;
                     move_motor(PWM_M1, 1000); //8% of duty cycle
                     l2_calib = true;
-                    encoder_count[1] = 0; //Reset value of motor 2's encoder 
+                    encoder_count[1] = 0; //Reset value of motor 2's encoder
                 }
                 if (SWITCH_0_L1_ON && l1_calib == false && l2_calib == true){
                     move_motor(PWM_M1, 0);
                     STOP_M1;
                     l1_calib = true;
-                    encoder_count[0] = 0; //Reset value of motor 1's encoder 
+                    encoder_count[0] = 0; //Reset value of motor 1's encoder
                 }
                 //After reaching this calibration position, start homing:
                 if (l1_calib && l2_calib){
@@ -377,7 +510,7 @@ int main(void){
                 break;
             case STATE_PICK_CASE:
                 //current_state = STATE_PLACE_CASE;
-                
+
                 break;
             case STATE_PLACE_CASE:
 
@@ -394,8 +527,9 @@ int main(void){
             default:
                 break;
         }
-        sleep_ms(20);
     }
 
     return 0; //success
 }
+
+

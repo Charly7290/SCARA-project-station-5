@@ -71,24 +71,24 @@ void init_motor(int IN1, int IN2, int PWM_M){
     gpio_put(IN1, 1);
 
     gpio_init(IN2);
-    gpio_set_dir(IN2, GPIO_OUT); 
+    gpio_set_dir(IN2, GPIO_OUT);
     gpio_put(IN2, 0);
-    
+
     // Set the GPIO pin function to PWM
     gpio_set_function(PWM_M, GPIO_FUNC_PWM);
-    
+
     // Get the PWM slice number associated with the GPIO pin
     uint slice_num = pwm_gpio_to_slice_num(PWM_M);
-    
+
     // Set the wrap value for a 20 kHz PWM signal (calculated wrap = 6249)
     // PWM frequency = (125 MHz / wrap) - 1
     // 6249 = (125000000 / 20000) - 1
     // 20 kHz PWM signal for a DC motor:
     pwm_set_wrap(slice_num, 6249);
-    
+
     // Start with a 0 % duty cycle
     pwm_set_chan_level(slice_num, pwm_gpio_to_channel(PWM_M), 0);
-    
+
     // Enable PWM output on the slice
     pwm_set_enabled(slice_num, true);
 }
@@ -101,10 +101,10 @@ void move_motor(int pin_pwm, int dutyC){
 
 th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     th anglesIK;
-    // th1 is elbow up; th1_p is elbow down 
+    // th1 is elbow up; th1_p is elbow down
 
     //Possible collision with SCARA's base:
-    if (p_x < -19.0f){ 
+    if (p_x < -19.0f){
         p_x = -19.0f;
     }
     if (p_y > -14.0f && p_y < 0.0f){
@@ -141,7 +141,7 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     if(th1 < -105.9f || th1 > 105.9f){ //link 1
         th1 = 180.0f;
     }
-    if(th1_p < -105.9f || th1_p > 105.9f){ 
+    if(th1_p < -105.9f || th1_p > 105.9f){
         th1_p = 180.0f;
     }
     if(th2 > 130.0f){ //link 2

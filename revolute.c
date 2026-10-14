@@ -171,13 +171,14 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     }
 
     // Z-axis movement, measured considering the tip of the tool:
-    const float pz_home = 6.95f, gear_radius = 4.05f/2.0f; //cm
+    const float gear_radius = 4.0f/2.0f; //cm
+    const float pz_home = 1.0f * (float)M_PI * 2.0f; //cm; obtained by replacing dist from eq. (1) and p_z = 0cm
     float dist = pz_home - p_z;
-    anglesIK.theta_prism = (dist / gear_radius) * 180.0f / (float)M_PI;
-    if(anglesIK.theta_prism < 0.0f){
+    anglesIK.theta_prism = (dist / gear_radius) * 180.0f / (float)M_PI; // eq. (1)
+    if(dist <= 0.0f || anglesIK.theta_prism < 0.0f){
         anglesIK.theta_prism = 0.0f;
     }
-    if(anglesIK.theta_prism > 180.0f){
+    if(dist >= pz_home || anglesIK.theta_prism > 180.0f){
         anglesIK.theta_prism = 180.0f;
     }
 

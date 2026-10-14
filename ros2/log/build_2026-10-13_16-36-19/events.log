@@ -1,0 +1,92 @@
+[0.000000] (-) TimerEvent: {}
+[0.000262] (scara_teleop) JobQueued: {'identifier': 'scara_teleop', 'dependencies': OrderedDict()}
+[0.000342] (scara_teleop) JobStarted: {'identifier': 'scara_teleop'}
+[0.098319] (-) TimerEvent: {}
+[0.198822] (-) TimerEvent: {}
+[0.299320] (-) TimerEvent: {}
+[0.399750] (-) TimerEvent: {}
+[0.500163] (-) TimerEvent: {}
+[0.600565] (-) TimerEvent: {}
+[0.701037] (-) TimerEvent: {}
+[0.801535] (-) TimerEvent: {}
+[0.901978] (-) TimerEvent: {}
+[1.002432] (-) TimerEvent: {}
+[1.102887] (-) TimerEvent: {}
+[1.203269] (-) TimerEvent: {}
+[1.303624] (-) TimerEvent: {}
+[1.403947] (-) TimerEvent: {}
+[1.504316] (-) TimerEvent: {}
+[1.604761] (-) TimerEvent: {}
+[1.705112] (-) TimerEvent: {}
+[1.805489] (-) TimerEvent: {}
+[1.905907] (-) TimerEvent: {}
+[2.006326] (-) TimerEvent: {}
+[2.106728] (-) TimerEvent: {}
+[2.207065] (-) TimerEvent: {}
+[2.307446] (-) TimerEvent: {}
+[2.407791] (-) TimerEvent: {}
+[2.508115] (-) TimerEvent: {}
+[2.608645] (-) TimerEvent: {}
+[2.703423] (scara_teleop) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'egg_info', '--egg-base', '../build/scara_teleop', 'build', '--build-base', '/home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build', 'install', '--record', '/home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/install.log', '--install-scripts', '$base/lib/scara_teleop', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/scara_teleop', 'env': OrderedDict({'GJS_DEBUG_TOPICS': 'JS ERROR;JS LOG', 'XDG_ACTIVATION_TOKEN': 'gnome-shell/Terminator/2448-2-yepesita-VivoBook-ASUSLaptop-X409FJ-X409FJ_TIME2108718', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'GZ_SIM_RESOURCE_PATH': '/opt/ros/jazzy/share', 'USER': 'yepesita', 'GZ_CONFIG_PATH': '/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz', 'XDG_SESSION_TYPE': 'x11', 'CLUTTER_DISABLE_MIPMAPPED_TEXT': '1', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/opt/gz_sim_vendor/lib:/opt/ros/jazzy/opt/gz_sensors_vendor/lib:/opt/ros/jazzy/opt/gz_physics_vendor/lib:/opt/ros/jazzy/opt/sdformat_vendor/lib:/opt/ros/jazzy/opt/rviz_ogre_vendor/lib:/opt/ros/jazzy/lib/x86_64-linux-gnu:/opt/ros/jazzy/opt/gz_gui_vendor/lib:/opt/ros/jazzy/opt/gz_transport_vendor/lib:/opt/ros/jazzy/opt/gz_rendering_vendor/lib:/opt/ros/jazzy/opt/gz_plugin_vendor/lib:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/lib:/opt/ros/jazzy/opt/gz_msgs_vendor/lib:/opt/ros/jazzy/opt/gz_common_vendor/lib:/opt/ros/jazzy/opt/gz_math_vendor/lib:/opt/ros/jazzy/opt/gz_utils_vendor/lib:/opt/ros/jazzy/opt/gz_tools_vendor/lib:/opt/ros/jazzy/opt/gz_ogre_next_vendor/lib:/opt/ros/jazzy/opt/gz_dartsim_vendor/lib:/opt/ros/jazzy/opt/gz_cmake_vendor/lib:/opt/ros/jazzy/lib', 'HOME': '/home/yepesita', 'OLDPWD': '/home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5', 'DESKTOP_SESSION': 'ubuntu', 'NVM_BIN': '/home/yepesita/.nvm/versions/node/v24.18.0/bin', 'NVM_INC': '/home/yepesita/.nvm/versions/node/v24.18.0/include/node', 'GIO_LAUNCHED_DESKTOP_FILE': '/usr/share/applications/terminator.desktop', 'ROS_PYTHON_VERSION': '3', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'MANAGERPID': '2065', 'SYSTEMD_EXEC_PID': '2448', 'GSM_SKIP_SSH_AGENT_WORKAROUND': 'true', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'TERMINATOR_DBUS_NAME': 'net.tenshu.Terminator23558193cd9818af7fe4d2c2f5bd9d00f', 'GIO_LAUNCHED_DESKTOP_FILE_PID': '6308', 'NVM_DIR': '/home/yepesita/.nvm', 'DEBUGINFOD_URLS': 'https://debuginfod.ubuntu.com', 'COLCON_PREFIX_PATH': '/home/yepesita/Documentos/Robotica/PARCIAL4/Parcial-3-Robotica/ros2_ws_mecanum_estudiantes/ros2_ws_mecanum/install', 'ROS_DISTRO': 'jazzy', 'LOGNAME': 'yepesita', 'JOURNAL_STREAM': '10:20657', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'MEMORY_PRESSURE_WATCH': '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/org.gnome.Shell@x11.service/memory.pressure', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'yepesita', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'WINDOWPATH': '2', 'PATH': '/usr/local/cuda-12.6/bin:/home/yepesita/.nvm/versions/node/v24.18.0/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/yepesita-VivoBook-ASUSLaptop-X409FJ-X409FJ:@/tmp/.ICE-unix/2404,unix/yepesita-VivoBook-ASUSLaptop-X409FJ-X409FJ:/tmp/.ICE-unix/2404', 'INVOCATION_ID': '62fc74d596a343889a7447576f169e52', 'XDG_MENU_PREFIX': 'gnome-', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':1', 'TERMINATOR_DBUS_PATH': '/net/tenshu/Terminator2', 'LANG': 'es_ES.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/gdm/Xauthority', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'AMENT_PREFIX_PATH': '/home/yepesita/Documentos/Robotica/PARCIAL4/Parcial-3-Robotica/ros2_ws_mecanum_estudiantes/ros2_ws_mecanum/install/mi_robot_mecanum:/home/yepesita/Documentos/Robotica/PARCIAL4/Parcial-3-Robotica/ros2_ws_mecanum_estudiantes/ros2_ws_mecanum/install/mi_mecanum_control:/opt/ros/jazzy', 'SHELL': '/bin/bash', 'TERMINATOR_UUID': 'urn:uuid:db16f960-8451-42fd-8a62-b7c8f202b16a', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'GPG_AGENT_INFO': '/run/user/1000/gnupg/S.gpg-agent:0:1', 'GJS_DEBUG_OUTPUT': 'stderr', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'PICO_SDK_PATH': '/home/yepesita/pico-sdk', 'NVM_CD_FLAGS': '', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/python3.12/site-packages:/home/yepesita/Documentos/Robotica/PARCIAL4/Parcial-3-Robotica/ros2_ws_mecanum_estudiantes/ros2_ws_mecanum/build/mi_mecanum_control:/home/yepesita/Documentos/Robotica/PARCIAL4/Parcial-3-Robotica/ros2_ws_mecanum_estudiantes/ros2_ws_mecanum/install/mi_mecanum_control/lib/python3.12/site-packages:/opt/ros/jazzy/opt/gz_sim_vendor/lib/python:/opt/ros/jazzy/opt/sdformat_vendor/lib/python:/opt/ros/jazzy/opt/gz_transport_vendor/lib/python:/opt/ros/jazzy/opt/gz_msgs_vendor/lib/python:/opt/ros/jazzy/opt/gz_math_vendor/lib/python:/opt/ros/jazzy/lib/python3.12/site-packages', 'LC_NUMERIC': 'C', 'COLCON': '1', 'MEMORY_PRESSURE_WRITE': 'c29tZSAyMDAwMDAgMjAwMDAwMAA=', 'VTE_VERSION': '7600', 'CMAKE_PREFIX_PATH': '/home/yepesita/Documentos/Robotica/PARCIAL4/Parcial-3-Robotica/ros2_ws_mecanum_estudiantes/ros2_ws_mecanum/install/mi_robot_mecanum:/opt/ros/jazzy/opt/gz_sim_vendor:/opt/ros/jazzy/opt/gz_sensors_vendor:/opt/ros/jazzy/opt/gz_physics_vendor:/opt/ros/jazzy/opt/sdformat_vendor:/opt/ros/jazzy/opt/gz_gui_vendor:/opt/ros/jazzy/opt/gz_transport_vendor:/opt/ros/jazzy/opt/gz_rendering_vendor:/opt/ros/jazzy/opt/gz_plugin_vendor:/opt/ros/jazzy/opt/gz_fuel_tools_vendor:/opt/ros/jazzy/opt/gz_msgs_vendor:/opt/ros/jazzy/opt/gz_common_vendor:/opt/ros/jazzy/opt/gz_math_vendor:/opt/ros/jazzy/opt/gz_utils_vendor:/opt/ros/jazzy/opt/gz_tools_vendor:/opt/ros/jazzy/opt/gz_ogre_next_vendor:/opt/ros/jazzy/opt/gz_dartsim_vendor:/opt/ros/jazzy/opt/gz_cmake_vendor'}), 'shell': False}
+[2.708905] (-) TimerEvent: {}
+[2.809528] (-) TimerEvent: {}
+[2.909915] (-) TimerEvent: {}
+[3.010298] (-) TimerEvent: {}
+[3.110678] (-) TimerEvent: {}
+[3.211036] (-) TimerEvent: {}
+[3.311380] (-) TimerEvent: {}
+[3.411728] (-) TimerEvent: {}
+[3.482843] (scara_teleop) StdoutLine: {'line': b'running egg_info\n'}
+[3.483462] (scara_teleop) StdoutLine: {'line': b'creating ../build/scara_teleop/scara_teleop.egg-info\n'}
+[3.511883] (-) TimerEvent: {}
+[3.533162] (scara_teleop) StdoutLine: {'line': b'writing ../build/scara_teleop/scara_teleop.egg-info/PKG-INFO\n'}
+[3.533639] (scara_teleop) StdoutLine: {'line': b'writing dependency_links to ../build/scara_teleop/scara_teleop.egg-info/dependency_links.txt\n'}
+[3.534078] (scara_teleop) StdoutLine: {'line': b'writing entry points to ../build/scara_teleop/scara_teleop.egg-info/entry_points.txt\n'}
+[3.534545] (scara_teleop) StdoutLine: {'line': b'writing requirements to ../build/scara_teleop/scara_teleop.egg-info/requires.txt\n'}
+[3.534874] (scara_teleop) StdoutLine: {'line': b'writing top-level names to ../build/scara_teleop/scara_teleop.egg-info/top_level.txt\n'}
+[3.535219] (scara_teleop) StdoutLine: {'line': b"writing manifest file '../build/scara_teleop/scara_teleop.egg-info/SOURCES.txt'\n"}
+[3.611995] (-) TimerEvent: {}
+[3.639368] (scara_teleop) StdoutLine: {'line': b"reading manifest file '../build/scara_teleop/scara_teleop.egg-info/SOURCES.txt'\n"}
+[3.640999] (scara_teleop) StdoutLine: {'line': b"writing manifest file '../build/scara_teleop/scara_teleop.egg-info/SOURCES.txt'\n"}
+[3.641438] (scara_teleop) StdoutLine: {'line': b'running build\n'}
+[3.641720] (scara_teleop) StdoutLine: {'line': b'running build_py\n'}
+[3.642118] (scara_teleop) StdoutLine: {'line': b'creating /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build\n'}
+[3.642411] (scara_teleop) StdoutLine: {'line': b'creating /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build/lib\n'}
+[3.642639] (scara_teleop) StdoutLine: {'line': b'creating /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build/lib/scara_teleop\n'}
+[3.643127] (scara_teleop) StdoutLine: {'line': b'copying scara_teleop/controller_teleop_node.py -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build/lib/scara_teleop\n'}
+[3.643393] (scara_teleop) StdoutLine: {'line': b'copying scara_teleop/__init__.py -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build/lib/scara_teleop\n'}
+[3.643599] (scara_teleop) StdoutLine: {'line': b'copying scara_teleop/keyboard_teleop_node.py -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build/lib/scara_teleop\n'}
+[3.643857] (scara_teleop) StdoutLine: {'line': b'running install\n'}
+[3.658678] (scara_teleop) StdoutLine: {'line': b'running install_lib\n'}
+[3.710430] (scara_teleop) StdoutLine: {'line': b'creating /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/python3.12/site-packages/scara_teleop\n'}
+[3.710794] (scara_teleop) StdoutLine: {'line': b'copying /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build/lib/scara_teleop/controller_teleop_node.py -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/python3.12/site-packages/scara_teleop\n'}
+[3.711058] (scara_teleop) StdoutLine: {'line': b'copying /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build/lib/scara_teleop/__init__.py -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/python3.12/site-packages/scara_teleop\n'}
+[3.711402] (scara_teleop) StdoutLine: {'line': b'copying /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/build/lib/scara_teleop/keyboard_teleop_node.py -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/python3.12/site-packages/scara_teleop\n'}
+[3.712116] (scara_teleop) StdoutLine: {'line': b'byte-compiling /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/python3.12/site-packages/scara_teleop/controller_teleop_node.py to controller_teleop_node.cpython-312.pyc\n'}
+[3.712541] (-) TimerEvent: {}
+[3.716908] (scara_teleop) StdoutLine: {'line': b'byte-compiling /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/python3.12/site-packages/scara_teleop/__init__.py to __init__.cpython-312.pyc\n'}
+[3.718036] (scara_teleop) StdoutLine: {'line': b'byte-compiling /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/python3.12/site-packages/scara_teleop/keyboard_teleop_node.py to keyboard_teleop_node.cpython-312.pyc\n'}
+[3.721375] (scara_teleop) StdoutLine: {'line': b'running install_data\n'}
+[3.722016] (scara_teleop) StdoutLine: {'line': b'creating /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/share/ament_index\n'}
+[3.722564] (scara_teleop) StdoutLine: {'line': b'creating /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/share/ament_index/resource_index\n'}
+[3.722868] (scara_teleop) StdoutLine: {'line': b'creating /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/share/ament_index/resource_index/packages\n'}
+[3.723149] (scara_teleop) StdoutLine: {'line': b'copying resource/scara_teleop -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/share/ament_index/resource_index/packages\n'}
+[3.723561] (scara_teleop) StdoutLine: {'line': b'copying package.xml -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/share/scara_teleop\n'}
+[3.724080] (scara_teleop) StdoutLine: {'line': b'creating /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/share/scara_teleop/launch\n'}
+[3.724332] (scara_teleop) StdoutLine: {'line': b'copying launch/teleop.launch.py -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/share/scara_teleop/launch\n'}
+[3.724649] (scara_teleop) StdoutLine: {'line': b'copying launch/controller_teleop.launch.py -> /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/share/scara_teleop/launch\n'}
+[3.724865] (scara_teleop) StdoutLine: {'line': b'running install_egg_info\n'}
+[3.782621] (scara_teleop) StdoutLine: {'line': b'Copying ../build/scara_teleop/scara_teleop.egg-info to /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/python3.12/site-packages/scara_teleop-0.2.0-py3.12.egg-info\n'}
+[3.785063] (scara_teleop) StdoutLine: {'line': b'running install_scripts\n'}
+[3.812695] (-) TimerEvent: {}
+[3.913057] (-) TimerEvent: {}
+[4.013412] (-) TimerEvent: {}
+[4.113782] (-) TimerEvent: {}
+[4.146191] (scara_teleop) StdoutLine: {'line': b'Installing controller_teleop script to /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/scara_teleop\n'}
+[4.146714] (scara_teleop) StdoutLine: {'line': b'Installing keyboard_teleop script to /home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/install/scara_teleop/lib/scara_teleop\n'}
+[4.147263] (scara_teleop) StdoutLine: {'line': b"writing list of installed files to '/home/yepesita/Documentos/Robotica/SCARA/SCARA-project-station-5/ros2/build/scara_teleop/install.log'\n"}
+[4.214045] (-) TimerEvent: {}
+[4.260526] (scara_teleop) CommandEnded: {'returncode': 0}
+[4.314381] (-) TimerEvent: {}
+[4.316109] (scara_teleop) JobEnded: {'identifier': 'scara_teleop', 'rc': 0}
+[4.317863] (-) EventReactorShutdown: {}

@@ -145,6 +145,11 @@ void cmd_callback(const void *msgin) {
             coord_x = x;
             coord_y = y;
             coord_z = z;
+            if (coord_z == 0){
+                restriction = true;
+            } else {
+                restriction = false;
+            }
             current_state = STATE_TEST_IK;
         }
     } else if (strcmp(cmd, "J1_CW") == 0) {
@@ -275,9 +280,9 @@ int main(void){
     scara_state_t last_reported_state = STATE_INIT;
     float encoder_degrees_M1, encoder_degrees_M2;
     //Due to the relationship between the pulleys: consider s=rθ
-    const float pulley_ratio_M1 = 60.0f/28.0f; // based on the timing pulley teeth
+    const float pulley_ratio_M1 = 60.0f/28.0f * 109.3f/100.0f; // based on the timing pulley teeth
     const float pulley_ratio_M2 = 60.0f/20.0f; // based on the timing pulley teeth 
-    const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 109.3f * pulley_ratio_M1; 
+    const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 100.0f * pulley_ratio_M1; 
     float angleM1, angleM2, angleServo;
 
 
@@ -341,6 +346,8 @@ int main(void){
                     th anglesM = calculateIK(coord_x, coord_y, coord_z);
                     angleM1 = anglesM.theta1;
                     angleM2 = anglesM.theta2;
+                    
+                    angleServo = anglesM.theta_prism;
                     if(!isfinite(angleM1) || !isfinite(angleM2) || angleM1 == 180.0f || angleM2 == 180.0f){ //Out of joint limitations
                         move_motor(PWM_M1,0);
                         STOP_M1;
@@ -352,7 +359,6 @@ int main(void){
                         m2_moved = false;
                         goto_start_time = time_us_64();
                     }
-                    set_servo_angle(anglesM.theta_prism);
                     break;
                 case STATE_PICK_CASE:
 
@@ -442,6 +448,7 @@ int main(void){
                         }
                     }
                 }
+                
                 if (l1_homed && l2_homed){
                     encoder_count[0] = 0; //Home will be the new origin
                     encoder_count[1] = 0; //Home will be the new origin
@@ -460,7 +467,7 @@ int main(void){
                     break;
                 }
 
-                // Para M1:
+                // For M1:
                 encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
                 float actual_M1 = encoder_sign_M1 * encoder_degrees_M1 / pulley_ratio_M1;
                 float error_M1 = angleM1 - actual_M1;
@@ -479,7 +486,7 @@ int main(void){
                     move_motor(PWM_M1, 1000);
                 }
 
-                //Para M2 :D
+                //For M2 :D
                 encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
                 float actual_M2 = encoder_sign_M2 * encoder_degrees_M2 / pulley_ratio_M2;
                 float error_M2 = angleM2 - actual_M2;
@@ -497,15 +504,20 @@ int main(void){
                     }
                     move_motor(PWM_M2, 650);
                 }
-
+                
+                if (restriction){
+                    set_servo_angle(135);
+                }
 
                 if(m1_moved && m2_moved){
                     move_motor(PWM_M1, 0);
                     STOP_M1;
                     move_motor(PWM_M2, 0);
                     STOP_M2;
+                    set_servo_angle(angleServo);
                     current_state = STATE_IDLE;
                 }
+
 
                 break;
             case STATE_PICK_CASE:

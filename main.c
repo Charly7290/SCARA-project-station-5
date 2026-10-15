@@ -58,6 +58,7 @@ static uint64_t j3_last_us = 0;
 static volatile int  jog_dir[2]       = {DIR_STOP, DIR_STOP}; //[0] = M1, [1] = M2
 static volatile bool jog_block_cw[2]  = {false, false};       //CW blocked until released
 static volatile bool jog_block_ccw[2] = {false, false};       //CCW blocked until released
+bool restriction;
 
 static bool jog_limit_hit(int motor, int dir){
     if (motor == 0) return (dir == DIR_CW) ? M1_CW_LIMIT_HIT : M1_CCW_LIMIT_HIT;
@@ -135,17 +136,16 @@ void cmd_callback(const void *msgin) {
     } else if (strcmp(cmd, "MANUAL") == 0) {
         current_state = STATE_MANUAL;
     
-    } else if (strncmp(cmd, "PUNTO,", 6) == 0) {
+    } else if (strncmp(cmd, "GO TO:", 6) == 0) {
         float x, y, z;
-        char extra;
 
-        int result = sscanf(cmd, "PUNTO,%f,%f,%f %c", &x, &y, &z, &extra);
+        int result = sscanf(cmd, "GO TO:%f,%f,%f", &x, &y, &z);
 
         if (result == 3 && isfinite(x) && isfinite(y) && isfinite(z) && robot_homed && current_state == STATE_IDLE) {
             coord_x = x;
             coord_y = y;
             coord_z = z;
-            if (coord_z == 0){
+            if (coord_z <= 0.0f){
                 restriction = true;
             } else {
                 restriction = false;
@@ -280,14 +280,14 @@ int main(void){
     scara_state_t last_reported_state = STATE_INIT;
     float encoder_degrees_M1, encoder_degrees_M2;
     //Due to the relationship between the pulleys: consider s=rθ
-    const float pulley_ratio_M1 = 60.0f/28.0f * 109.3f/100.0f; // based on the timing pulley teeth
+    const float pulley_ratio_M1 = 60.0f/28.0f; // based on the timing pulley teeth and tests made
     const float pulley_ratio_M2 = 60.0f/20.0f; // based on the timing pulley teeth 
-    const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 100.0f * pulley_ratio_M1; 
+    const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 106.5f * pulley_ratio_M1; 
     float angleM1, angleM2, angleServo;
 
 
-    //puntoapunto
-    const float tolerance = 2.0f;  // Grados articulares
+    //Point-to-point
+    const float tolerance = 1.0f;  // Grados articulares
     uint64_t goto_start_time = 0;
     const uint64_t goto_timeout_us = 15000000ULL;
 
@@ -321,7 +321,7 @@ int main(void){
                     CW_M2;
                     move_motor(PWM_M1, 0);
                     STOP_M1;
-                    move_motor(PWM_M2, 700); //5% of duty cycle
+                    move_motor(PWM_M2, 900);
                     servo_home();
                     l1_calib = false;
                     l1_homed = false;
@@ -409,7 +409,7 @@ int main(void){
                     move_motor(PWM_M2, 0);
                     STOP_M2;
                     CCW_M1;
-                    move_motor(PWM_M1, 1000); //8% of duty cycle
+                    move_motor(PWM_M1, 900);
                     l2_calib = true;
                     encoder_count[1] = 0; //Reset value of motor 2's encoder
                 }
@@ -424,7 +424,7 @@ int main(void){
                     if(l2_homed == false){
                         if (m2_moved == false){
                             CCW_M2;
-                            move_motor(PWM_M2, 625);
+                            move_motor(PWM_M2, 1000);
                             m2_moved = true;
                         }
                         encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
@@ -437,7 +437,7 @@ int main(void){
                     if (l2_homed == true && l1_homed == false){
                         if (m1_moved == false){
                             CW_M1;
-                            move_motor(PWM_M1, 800); 
+                            move_motor(PWM_M1, 900); 
                             m1_moved = true;
                         }
                         encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
@@ -478,12 +478,12 @@ int main(void){
                     m1_moved = true;
                 } else { 
                     m1_moved = false;
-                     if ((error_M1 > 0.0f) == positive_cw_M1) {
+                    if (error_M1 > 0.05f) {
                         CW_M1;
                     } else {
                         CCW_M1;
                     }
-                    move_motor(PWM_M1, 1000);
+                    move_motor(PWM_M1, 1100);
                 }
 
                 //For M2 :D
@@ -497,12 +497,12 @@ int main(void){
                     m2_moved = true;
                 } else {
                     m2_moved = false;
-                    if ((error_M2 > 0.0f) == positive_cw_M2) {
+                    if (error_M2 > 0.0f) {
                         CW_M2;
                     } else {
                         CCW_M2;
                     }
-                    move_motor(PWM_M2, 650);
+                    move_motor(PWM_M2, 1100);
                 }
                 
                 if (restriction){

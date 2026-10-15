@@ -107,15 +107,15 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     if (p_x < -19.0f){
         p_x = -19.0f;
     }
-    if (p_y > -14.0f && p_y < 0.0f){
+    if ((p_x < 3.0f && p_x > -20.0f) && (p_y > -11.0f && p_y < 0.0f)){
         p_y = -14.0f; //Right side, not to collide with the power supply on this side
     }
-    if (p_y < 11.0f && p_y > 0.0f){ //Left side
+    if ((p_x < 3.0f && p_x > -20.0f) && (p_y < 7.0f && p_y > 0.0f)){ //Left side
         p_y = 11.0f;
     }
 
     //  XY-Plane:
-    const float l1 = 15.0f, l2 = 15.5f; //Link lenghts, in cm
+    const float l1 = 14.0f, l2 = 15.0f; //Link lenghts, in cm
     float r = sqrtf(powf(p_x, 2.0f) + powf(p_y, 2.0f));
     float alpha = atan2f(p_y,p_x);
     float th1, th2_p, th1_p, th2, phi;
@@ -173,12 +173,15 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     // Z-axis movement, measured considering the tip of the tool:
     const float gear_radius = 4.0f/2.0f; //cm
     const float pz_home = 1.0f * (float)M_PI * 2.0f; //cm; obtained by replacing dist from eq. (1) and p_z = 0cm
+    if(p_z == 0.0f){
+        p_z = 0.3f; //Considering the offset the tool will have
+    }
     float dist = pz_home - p_z;
     anglesIK.theta_prism = (dist / gear_radius) * 180.0f / (float)M_PI; // eq. (1)
     if(dist <= 0.0f || anglesIK.theta_prism < 0.0f){
         anglesIK.theta_prism = 0.0f;
     }
-    if(dist >= pz_home || anglesIK.theta_prism > 180.0f){
+    if(p_z < 0.0f){ //So the tool can go a little deeper (e.g. vacuum gripper)
         anglesIK.theta_prism = 180.0f;
     }
 

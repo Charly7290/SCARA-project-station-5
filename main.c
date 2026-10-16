@@ -21,6 +21,7 @@ float coord_x = 0.0f;
 float coord_y = 0.0f;
 float coord_z = 0.0f;
 bool robot_homed = false;
+bool cero = false;
 
 typedef enum { //States
     STATE_INIT,
@@ -58,7 +59,7 @@ static uint64_t j3_last_us = 0;
 static volatile int  jog_dir[2]       = {DIR_STOP, DIR_STOP}; //[0] = M1, [1] = M2
 static volatile bool jog_block_cw[2]  = {false, false};       //CW blocked until released
 static volatile bool jog_block_ccw[2] = {false, false};       //CCW blocked until released
-bool restriction;
+bool punto_anterior_recibido = false;
 bool tool; //For Test IK
 
 static bool jog_limit_hit(int motor, int dir){
@@ -143,15 +144,14 @@ void cmd_callback(const void *msgin) {
 
         int result = sscanf(cmd, "GO TO:%f,%f,%f,%3s", &x, &y, &z, tool_str);
         if (result == 4 && isfinite(x) && isfinite(y) && isfinite(z) && robot_homed && current_state == STATE_IDLE) {
+            if (cero) {
+            set_servo_angle(135);
+        }
+
+        cero = (coord_z == 0);
             coord_x = x;
             coord_y = y;
             coord_z = z;
-            if (coord_z <= 0.0f){
-                restriction = true;
-            } else {
-                restriction = false;
-            }
-
 
             tool = (strcmp(tool_str, "ON") == 0); //strcmp compares tool_str and "ON". If they're the same, it gives 0
             current_state = STATE_TEST_IK;
@@ -352,6 +352,12 @@ int main(void){
                     j3_last_us = time_us_64();
                     break;
                 case STATE_TEST_IK:
+                    if (cero && coord_z != 0) {
+                        set_servo_angle(135);
+                    }
+
+                    cero = (coord_z == 0);
+
                     th anglesM = calculateIK(coord_x, coord_y, coord_z);
                     angleM1 = anglesM.theta1;
                     angleM2 = anglesM.theta2;
@@ -512,24 +518,22 @@ int main(void){
                     }
                     move_motor(PWM_M2, 1100);
                 }
-                
-                if (restriction){
-                    set_servo_angle(135);
-                }
 
-                if(m1_moved && m2_moved){
+                if (m1_moved && m2_moved) {
                     move_motor(PWM_M1, 0);
                     STOP_M1;
                     move_motor(PWM_M2, 0);
                     STOP_M2;
                     set_servo_angle(angleServo);
-                    if(tool == true){
+
+                    if (tool == true) {
                         TOOL_ON;
                         tool_used = true;
-                    } else{
+                    } else {
                         TOOL_OFF;
                         tool_used = false;
                     }
+
                     current_state = STATE_IDLE;
                 }
 
@@ -558,4 +562,3 @@ int main(void){
 
     return 0; //success
 }
-

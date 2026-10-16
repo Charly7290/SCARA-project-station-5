@@ -59,7 +59,6 @@ static uint64_t j3_last_us = 0;
 static volatile int  jog_dir[2]       = {DIR_STOP, DIR_STOP}; //[0] = M1, [1] = M2
 static volatile bool jog_block_cw[2]  = {false, false};       //CW blocked until released
 static volatile bool jog_block_ccw[2] = {false, false};       //CCW blocked until released
-bool punto_anterior_recibido = false;
 bool tool; //For Test IK
 
 static bool jog_limit_hit(int motor, int dir){
@@ -144,11 +143,7 @@ void cmd_callback(const void *msgin) {
 
         int result = sscanf(cmd, "GO TO:%f,%f,%f,%3s", &x, &y, &z, tool_str);
         if (result == 4 && isfinite(x) && isfinite(y) && isfinite(z) && robot_homed && current_state == STATE_IDLE) {
-            if (cero) {
-            set_servo_angle(135);
-        }
 
-        cero = (coord_z == 0);
             coord_x = x;
             coord_y = y;
             coord_z = z;
@@ -352,11 +347,11 @@ int main(void){
                     j3_last_us = time_us_64();
                     break;
                 case STATE_TEST_IK:
-                    if (cero && coord_z != 0) {
+                    if (cero) {
                         set_servo_angle(135);
                     }
 
-                    cero = (coord_z == 0);
+                    cero = (coord_z <= 0);
 
                     th anglesM = calculateIK(coord_x, coord_y, coord_z);
                     angleM1 = anglesM.theta1;

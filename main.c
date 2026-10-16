@@ -431,31 +431,27 @@ int main(void){
                 }
                 //After reaching this calibration position, start homing:
                 if (l1_calib && l2_calib){
-                    if(l2_homed == false){
-                        if (m2_moved == false){
-                            CCW_M2;
-                            move_motor(PWM_M2, 1000);
-                            m2_moved = true;
-                        }
-                        encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
-                        if (fabsf(encoder_degrees_M2) >= target_M2_home){
-                            move_motor(PWM_M2, 0);
-                            STOP_M2;
-                            l2_homed = true;
-                        }
+                    if (m2_moved == false){
+                        CCW_M2;
+                        move_motor(PWM_M2, 1000);
+                        m2_moved = true;
                     }
-                    if (l2_homed == true && l1_homed == false){
-                        if (m1_moved == false){
-                            CW_M1;
-                            move_motor(PWM_M1, 900); 
-                            m1_moved = true;
-                        }
-                        encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
-                        if (fabsf(encoder_degrees_M1) >= target_M1_home){
-                            move_motor(PWM_M1, 0);
-                            STOP_M1;
-                            l1_homed = true;
-                        }
+                    if (m1_moved == false){
+                        CW_M1;
+                        move_motor(PWM_M1, 900); 
+                        m1_moved = true;
+                    }
+                    encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+                    if (fabsf(encoder_degrees_M2) >= target_M2_home){
+                        move_motor(PWM_M2, 0);
+                        STOP_M2;
+                        l2_homed = true;
+                    }
+                    encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+                    if (fabsf(encoder_degrees_M1) >= target_M1_home){
+                        move_motor(PWM_M1, 0);
+                        STOP_M1;
+                        l1_homed = true;
                     }
                 }
                 

@@ -21,7 +21,7 @@ float coord_x = 0.0f;
 float coord_y = 0.0f;
 float coord_z = 0.0f;
 bool robot_homed = false;
-bool cero = false;
+bool zero = false;
 
 typedef enum { //States
     STATE_INIT,
@@ -347,11 +347,11 @@ int main(void){
                     j3_last_us = time_us_64();
                     break;
                 case STATE_TEST_IK:
-                    if (cero) {
+                    if (zero) {
                         set_servo_angle(135);
                     }
 
-                    cero = (coord_z <= 0);
+                    zero = (coord_z <= 0);
 
                     th anglesM = calculateIK(coord_x, coord_y, coord_z);
                     angleM1 = anglesM.theta1;

@@ -59,6 +59,7 @@ static volatile int  jog_dir[2]       = {DIR_STOP, DIR_STOP}; //[0] = M1, [1] = 
 static volatile bool jog_block_cw[2]  = {false, false};       //CW blocked until released
 static volatile bool jog_block_ccw[2] = {false, false};       //CCW blocked until released
 bool restriction;
+bool tool; //For Test IK
 
 static bool jog_limit_hit(int motor, int dir){
     if (motor == 0) return (dir == DIR_CW) ? M1_CW_LIMIT_HIT : M1_CCW_LIMIT_HIT;
@@ -138,10 +139,10 @@ void cmd_callback(const void *msgin) {
     
     } else if (strncmp(cmd, "GO TO:", 6) == 0) {
         float x, y, z;
+        char tool_str[4] = {0};
 
-        int result = sscanf(cmd, "GO TO:%f,%f,%f", &x, &y, &z);
-
-        if (result == 3 && isfinite(x) && isfinite(y) && isfinite(z) && robot_homed && current_state == STATE_IDLE) {
+        int result = sscanf(cmd, "GO TO:%f,%f,%f,%3s", &x, &y, &z, tool_str);
+        if (result == 4 && isfinite(x) && isfinite(y) && isfinite(z) && robot_homed && current_state == STATE_IDLE) {
             coord_x = x;
             coord_y = y;
             coord_z = z;
@@ -150,6 +151,9 @@ void cmd_callback(const void *msgin) {
             } else {
                 restriction = false;
             }
+
+
+            tool = (strcmp(tool_str, "ON") == 0); //strcmp compares tool_str and "ON". If they're the same, it gives 0
             current_state = STATE_TEST_IK;
         }
     } else if (strcmp(cmd, "J1_CW") == 0) {
@@ -276,6 +280,7 @@ int main(void){
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
     bool l1_calib, l1_homed, l2_calib, l2_homed, m1_moved, m2_moved;
+    bool tool_used = false;
     uint64_t last_time = time_us_64();
     scara_state_t last_reported_state = STATE_INIT;
     float encoder_degrees_M1, encoder_degrees_M2;
@@ -287,7 +292,7 @@ int main(void){
 
 
     //Point-to-point
-    const float tolerance = 1.0f;  // Grados articulares
+    const float tolerance = 0.4f;  // Grados articulares
     uint64_t goto_start_time = 0;
     const uint64_t goto_timeout_us = 15000000ULL;
 
@@ -304,6 +309,9 @@ int main(void){
             scara_state_t entered_state = current_state;
             switch(current_state){
                 case STATE_IDLE:
+                    if(tool_used == false){
+                        TOOL_OFF;
+                    }
                     for (int i = 0; i < 4; i++){
                         gpio_put(LED_PIN, 1);
                         sleep_ms(125);
@@ -312,11 +320,11 @@ int main(void){
                     }
                     m1_moved = false;
                     m2_moved = false;
-                    TOOL_OFF;
                     //waiting for a message to change state...
                     break;
-                 case STATE_HOMING:
+                case STATE_HOMING:
                     TOOL_OFF;
+                    tool_used = false;
                     CCW_M1;
                     CW_M2;
                     move_motor(PWM_M1, 0);
@@ -332,6 +340,7 @@ int main(void){
                     break;
                 case STATE_MANUAL:
                     TOOL_OFF;
+                    tool_used = false;
                     last_manual_cmd_time = time_us_64(); //Reset dead-man's switch
                     //Reset jog and limit switch state
                     for (int i = 0; i < 2; i++) {
@@ -361,19 +370,19 @@ int main(void){
                     }
                     break;
                 case STATE_PICK_CASE:
-
+                    tool_used = false;
 
                     break;
                 case STATE_PLACE_CASE:
-
+                    tool_used = false;
 
                     break;
                 case STATE_PICK_PCB:
-
+                    tool_used = false;
 
                     break;
                 case STATE_INSERT_PCB:
-
+                    tool_used = false;
 
                     break;
                 default: //just in case
@@ -457,7 +466,6 @@ int main(void){
                 }
                 break;
             case STATE_TEST_IK:
-
                 if (time_us_64() - goto_start_time >= goto_timeout_us) {
                     move_motor(PWM_M1, 0);
                     STOP_M1;
@@ -515,6 +523,13 @@ int main(void){
                     move_motor(PWM_M2, 0);
                     STOP_M2;
                     set_servo_angle(angleServo);
+                    if(tool == true){
+                        TOOL_ON;
+                        tool_used = true;
+                    } else{
+                        TOOL_OFF;
+                        tool_used = false;
+                    }
                     current_state = STATE_IDLE;
                 }
 

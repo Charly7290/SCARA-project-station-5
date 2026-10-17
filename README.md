@@ -1,10 +1,10 @@
 # SCARA-project-station-5
 ### **Comandos de ejecución dentro de SCARA_Project/SCARA-project-station-5:**
-curl -fsSL https://get.docker.com | sudo sh #Descargar Docker
-./tools/microros_bringup/run_agent.sh #Ejecutar Agente MicroROS
-ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'HOME'" --once #Enviar SCARA a estado Home
-ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'MANUAL'" --once #Enviar SCARA a estado Manual
-ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'GO TO: 15, 15, 0, ON'" --once #coordenadas de acuerdo al W-Space del SCARA y la activación de la herramienta, es decir, GO TO: x, y, z, ON/OFF
+curl -fsSL https://get.docker.com | sudo sh #Descargar Docker\
+./tools/microros_bringup/run_agent.sh #Ejecutar Agente MicroROS\
+ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'HOME'" --once #Enviar SCARA a estado Home\
+ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'MANUAL'" --once #Enviar SCARA a estado Manual\
+ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'GO TO: 15, 15, 0, ON'" --once #coordenadas de acuerdo al W-Space del SCARA y la activación de la herramienta, es decir, GO TO: x, y, z, ON/OFF\
 
 # **Descripción de los módulos de software**
 

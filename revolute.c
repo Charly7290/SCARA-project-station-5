@@ -152,14 +152,23 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     }
 
     //Direction of Motors: (it needs an improvement so that the direction depends on the shortest path)***
-    if(p_y < 0) { // Left side of SCARA
-        anglesIK.theta2 = th2_p;
-        anglesIK.theta1 = th1;
-    } else { // Right side of SCARA, including p_y == 0
-        anglesIK.theta2 = th2;
-        anglesIK.theta1 = th1_p;
+    if(p_x < 15){ //for TestIK
+        if(p_y < 0) { // Left side of SCARA
+            anglesIK.theta2 = th2_p;
+            anglesIK.theta1 = th1;
+        } else { // Right side of SCARA, including p_y == 0
+            anglesIK.theta2 = th2;
+            anglesIK.theta1 = th1_p;
+        }
+    } else{ //for PCBs and Cases
+        if(p_y < 0) { // Left side of SCARA
+            anglesIK.theta2 = th2;
+            anglesIK.theta1 = th1_p;
+        } else { // Right side of SCARA, including p_y == 0
+            anglesIK.theta2 = th2_p;
+            anglesIK.theta1 = th1;
+        }
     }
-
     // Check selected joint angles
     if (anglesIK.theta1 == 180.0f ||
         anglesIK.theta2 == 180.0f) {

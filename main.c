@@ -59,7 +59,25 @@ static uint64_t j3_last_us = 0;
 static volatile int  jog_dir[2]       = {DIR_STOP, DIR_STOP}; //[0] = M1, [1] = M2
 static volatile bool jog_block_cw[2]  = {false, false};       //CW blocked until released
 static volatile bool jog_block_ccw[2] = {false, false};       //CCW blocked until released
-bool tool; //For Test IK
+bool tool, m1_moved, m2_moved; 
+uint64_t goto_start_time = 0;
+
+const float encoder_sign_M1 = -1.0f;
+const float encoder_sign_M2 = -1.0f;
+//Due to the relationship between the pulleys: consider s=rθ
+const float pulley_ratio_M1 = 60.0f/28.0f; // based on the timing pulley teeth and tests made
+const float pulley_ratio_M2 = 60.0f/20.0f; // based on the timing pulley teeth 
+const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 106.5f * pulley_ratio_M1; 
+bool reach_z = false, tool_used = false;
+
+//Point-to-point
+const float tolerance = 0.4f;  // Grados articulares
+uint64_t grab_now;
+uint64_t drop_now;
+const uint64_t goto_timeout_us = 15000000ULL;
+
+
+float encoder_degrees_M1, encoder_degrees_M2;
 
 static bool jog_limit_hit(int motor, int dir){
     if (motor == 0) return (dir == DIR_CW) ? M1_CW_LIMIT_HIT : M1_CCW_LIMIT_HIT;
@@ -119,7 +137,7 @@ static void jog_motor_percent(int motor, int percent, int max_duty){
               (int)(((float)mag / 100.0f) * max_duty));
 }
 
-void cmd_callback(const void *msgin) {
+static void cmd_callback(const void *msgin) {
     const std_msgs__msg__String *m = (const std_msgs__msg__String *)msgin;
     char cmd[65];
     if (m->data.size >= sizeof(cmd)) {
@@ -128,7 +146,13 @@ void cmd_callback(const void *msgin) {
     memcpy(cmd, m->data.data, m->data.size);
     cmd[m->data.size] = '\0';
 
-    if (strcmp(cmd, "HOME") == 0) {
+    if (strcmp(cmd, "STOP") == 0) {
+        move_motor(PWM_M1, 0);
+        STOP_M1;
+        move_motor(PWM_M2, 0);
+        STOP_M2;
+        current_state = STATE_IDLE;
+    } else if (strcmp(cmd, "HOME") == 0) {
         // Stop any in-progress manual jog before handing control to the homing routine
         move_motor(PWM_M1, 0);
         move_motor(PWM_M2, 0);
@@ -151,6 +175,8 @@ void cmd_callback(const void *msgin) {
             tool = (strcmp(tool_str, "ON") == 0); //strcmp compares tool_str and "ON". If they're the same, it gives 0
             current_state = STATE_TEST_IK;
         }
+    } else if (strcmp(cmd, "PICK&PLACE") == 0 && robot_homed && current_state == STATE_IDLE) {
+        current_state = STATE_PICK_CASE;
     } else if (strcmp(cmd, "J1_CW") == 0) {
         if (current_state == STATE_MANUAL) { last_manual_cmd_time = time_us_64(); jog_motor(0, DIR_CW, MANUAL_JOG_DUTY_M1); }
         else printf("Ignored %s: send MANUAL first.\n", cmd);
@@ -206,6 +232,97 @@ void cmd_callback(const void *msgin) {
         printf("Unknown state: %s\n", cmd);
     }
 }
+
+static th defineAngles(float point_X, float point_Y, float point_Z){ //Get the angles from calculations
+    if (zero) set_servo_angle(45);
+    zero = (point_Z <= 0);
+
+    th anglesM = calculateIK(point_X, point_Y, point_Z);
+    if(!isfinite(anglesM.theta1) || !isfinite(anglesM.theta2) || anglesM.theta1 == 180.0f || anglesM.theta2 == 180.0f){ //Out of joint limitations
+        move_motor(PWM_M1,0);
+        STOP_M1;
+        move_motor(PWM_M2,0);
+        STOP_M2;
+        current_state = STATE_IDLE;
+        return anglesM;
+    } else {
+        m1_moved = false;
+        m2_moved = false;
+        reach_z = false;
+        goto_start_time = time_us_64();
+    }
+    return anglesM;
+}
+
+static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activate_tool){
+    if (time_us_64() - goto_start_time >= goto_timeout_us) {
+        move_motor(PWM_M1, 0);
+        STOP_M1;
+        move_motor(PWM_M2, 0);
+        STOP_M2;
+        current_state = STATE_IDLE;
+        return false;
+    }
+
+    // For M1:
+    encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+    float current_M1 = encoder_sign_M1 * encoder_degrees_M1 / pulley_ratio_M1;
+    float error_M1 = angleM1 - current_M1;
+
+    if (fabsf(error_M1) <= tolerance){
+        move_motor(PWM_M1, 0);
+        STOP_M1;
+        m1_moved = true;
+    } else { 
+        m1_moved = false;
+        if (error_M1 > 0.05f) {
+            CW_M1;
+        } else {
+            CCW_M1;
+        }
+        move_motor(PWM_M1, 1100);
+    }
+
+    //For M2 :D
+    encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
+    float current_M2 = encoder_sign_M2 * encoder_degrees_M2 / pulley_ratio_M2;
+    float error_M2 = angleM2 - current_M2;
+
+    if (fabsf(error_M2) <= tolerance){
+        move_motor(PWM_M2, 0);
+        STOP_M2;
+        m2_moved = true;
+    } else {
+        m2_moved = false;
+        if (error_M2 > 0.0f) {
+            CW_M2;
+        } else {
+            CCW_M2;
+        }
+        move_motor(PWM_M2, 1100);
+    }
+
+    if (m1_moved && m2_moved) {
+        move_motor(PWM_M1, 0);
+        STOP_M1;
+        move_motor(PWM_M2, 0);
+        STOP_M2;
+        set_servo_angle(angleServo);
+        if (reach_z == false){
+            if (activate_tool) {
+                TOOL_ON;
+                tool_used = true;
+                grab_now = time_us_64();
+            } else {
+                drop_now = time_us_64();
+            }
+            reach_z = true;
+        }
+        return true;
+    }
+    return false;
+}
+
 
 int main(void){
     //  STATE INIT:
@@ -274,29 +391,13 @@ int main(void){
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
-    bool l1_calib, l1_homed, l2_calib, l2_homed, m1_moved, m2_moved;
-    bool tool_used = false;
+    bool l1_calib, l1_homed, l2_calib, l2_homed;
+    th theta;
+    int pcbs = 1; //This SCARA's task: Pick&Place of four PCBs with cases;
+    
     uint64_t last_time = time_us_64();
     scara_state_t last_reported_state = STATE_INIT;
-    float encoder_degrees_M1, encoder_degrees_M2;
-    //Due to the relationship between the pulleys: consider s=rθ
-    const float pulley_ratio_M1 = 60.0f/28.0f; // based on the timing pulley teeth and tests made
-    const float pulley_ratio_M2 = 60.0f/20.0f; // based on the timing pulley teeth 
-    const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 106.5f * pulley_ratio_M1; 
-    float angleM1, angleM2, angleServo;
 
-
-    //Point-to-point
-    const float tolerance = 0.4f;  // Grados articulares
-    uint64_t goto_start_time = 0;
-    const uint64_t goto_timeout_us = 15000000ULL;
-
-    // Valores provisionales, pendientes de calibración
-    const float encoder_sign_M1 = -1.0f;
-    const float encoder_sign_M2 = -1.0f;
-
-    const bool positive_cw_M1 = true;
-    const bool positive_cw_M2 = true;
     current_state = STATE_IDLE;
     while(1){
         rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10)); //each call waits up to 10ms for a new message from publisher
@@ -304,15 +405,14 @@ int main(void){
             scara_state_t entered_state = current_state;
             switch(current_state){
                 case STATE_IDLE:
-                    if(tool_used == false){
-                        TOOL_OFF;
-                    }
                     for (int i = 0; i < 4; i++){
                         gpio_put(LED_PIN, 1);
                         sleep_ms(125);
                         gpio_put(LED_PIN, 0);
                         sleep_ms(125);
                     }
+                    if(tool_used == false) TOOL_OFF;
+                    pcbs = 1;
                     m1_moved = false;
                     m2_moved = false;
                     //waiting for a message to change state...
@@ -347,44 +447,49 @@ int main(void){
                     j3_last_us = time_us_64();
                     break;
                 case STATE_TEST_IK:
-                    if (zero) {
-                        set_servo_angle(135);
-                    }
-
-                    zero = (coord_z <= 0);
-
-                    th anglesM = calculateIK(coord_x, coord_y, coord_z);
-                    angleM1 = anglesM.theta1;
-                    angleM2 = anglesM.theta2;
-                    
-                    angleServo = anglesM.theta_prism;
-                    if(!isfinite(angleM1) || !isfinite(angleM2) || angleM1 == 180.0f || angleM2 == 180.0f){ //Out of joint limitations
-                        move_motor(PWM_M1,0);
-                        STOP_M1;
-                        move_motor(PWM_M2,0);
-                        STOP_M2;
-                        current_state = STATE_IDLE;
-                    } else {
-                        m1_moved = false;
-                        m2_moved = false;
-                        goto_start_time = time_us_64();
-                    }
+                    theta = defineAngles(coord_x, coord_y, coord_z);
                     break;
                 case STATE_PICK_CASE:
-                    tool_used = false;
-
+                    theta = defineAngles(28.07f, 5.0f, -1.0f);
                     break;
                 case STATE_PLACE_CASE:
-                    tool_used = false;
-
+                    switch(pcbs){
+                        case 1:
+                            theta = defineAngles(28.07f, -5.0f, -1.0f);
+                            break;
+                        case 2:
+                            theta = defineAngles(24.79f, -10.0f, -1.0f);
+                            break;
+                        case 3:
+                            theta = defineAngles(20.19f, -13.0f, -1.0f);
+                            break;
+                        case 4:
+                            theta = defineAngles(15.0f, -14.0f, -1.0f);
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 case STATE_PICK_PCB:
-                    tool_used = false;
-
+                    theta = defineAngles(15.0f, 14.0f, -1.0f);
                     break;
                 case STATE_INSERT_PCB:
-                    tool_used = false;
-
+                    switch(pcbs){
+                        case 1:
+                            theta = defineAngles(28.07f, -5.0f, -1.0f);
+                            break;
+                        case 2:
+                            theta = defineAngles(24.79f, -10.0f, -1.0f);
+                            break;
+                        case 3:
+                            theta = defineAngles(20.19f, -13.0f, -1.0f);
+                            break;
+                        case 4:
+                            theta = defineAngles(15.0f, -14.0f, -1.0f);
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 default: //just in case
                     break;
@@ -463,88 +568,53 @@ int main(void){
                 }
                 break;
             case STATE_TEST_IK:
-                if (time_us_64() - goto_start_time >= goto_timeout_us) {
-                    move_motor(PWM_M1, 0);
-                    STOP_M1;
-                    move_motor(PWM_M2, 0);
-                    STOP_M2;
-                    current_state = STATE_IDLE;
-                    break;
-                }
-
-                // For M1:
-                encoder_degrees_M1 = encoder_count[0] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
-                float actual_M1 = encoder_sign_M1 * encoder_degrees_M1 / pulley_ratio_M1;
-                float error_M1 = angleM1 - actual_M1;
-
-                if (fabsf(error_M1) <= tolerance){
-                    move_motor(PWM_M1, 0);
-                    STOP_M1;
-                    m1_moved = true;
-                } else { 
-                    m1_moved = false;
-                    if (error_M1 > 0.05f) {
-                        CW_M1;
-                    } else {
-                        CCW_M1;
+                if (goToPoint(theta.theta1, theta.theta2, theta.theta_prism, tool)){
+                    if ((time_us_64() - grab_now >= 500000ULL) && tool == true) {
+                        current_state = STATE_IDLE;
                     }
-                    move_motor(PWM_M1, 1100);
-                }
-
-                //For M2 :D
-                encoder_degrees_M2 = encoder_count[1] * 360.0f / 3200.0f; // Since it's a Pololu DC motor 50:1, 64 ticks --> 3200 ticks
-                float actual_M2 = encoder_sign_M2 * encoder_degrees_M2 / pulley_ratio_M2;
-                float error_M2 = angleM2 - actual_M2;
-
-                if (fabsf(error_M2) <= tolerance){
-                    move_motor(PWM_M2, 0);
-                    STOP_M2;
-                    m2_moved = true;
-                } else {
-                    m2_moved = false;
-                    if (error_M2 > 0.0f) {
-                        CW_M2;
-                    } else {
-                        CCW_M2;
-                    }
-                    move_motor(PWM_M2, 1100);
-                }
-
-                if (m1_moved && m2_moved) {
-                    move_motor(PWM_M1, 0);
-                    STOP_M1;
-                    move_motor(PWM_M2, 0);
-                    STOP_M2;
-                    set_servo_angle(angleServo);
-
-                    if (tool == true) {
-                        TOOL_ON;
-                        tool_used = true;
-                    } else {
+                    if ((time_us_64() - drop_now >= 500000ULL) && tool == false) {
                         TOOL_OFF;
                         tool_used = false;
+                        current_state = STATE_IDLE;
                     }
-
-                    current_state = STATE_IDLE;
                 }
-
-
                 break;
             case STATE_PICK_CASE:
-                //current_state = STATE_PLACE_CASE;
-
+                if (goToPoint(theta.theta1, theta.theta2, theta.theta_prism, 1)){
+                    if ((time_us_64() - grab_now >= 2000000ULL)) {
+                        current_state = STATE_PLACE_CASE;
+                    }
+                }
                 break;
             case STATE_PLACE_CASE:
-
-                //current_state = STATE_PICK_PCB;
+                if (goToPoint(theta.theta1, theta.theta2, theta.theta_prism, 0)){
+                    if ((time_us_64() - drop_now >= 2000000ULL)) { //Drop the piece after the servo arrives the position
+                        TOOL_OFF;
+                        tool_used = false;
+                        current_state = STATE_PICK_PCB;
+                    }
+                }
                 break;
             case STATE_PICK_PCB:
-
-                //current_state = STATE_INSERT_PCB;
+                if (goToPoint(theta.theta1, theta.theta2, theta.theta_prism, 1)){
+                    if ((time_us_64() - grab_now >= 2000000ULL)) {
+                        current_state = STATE_INSERT_PCB;
+                    }
+                } 
                 break;
             case STATE_INSERT_PCB:
-
-                //current_state = STATE_HOMING;
+                if (goToPoint(theta.theta1, theta.theta2, theta.theta_prism, 0)){
+                    if ((time_us_64() - drop_now >= 2000000ULL)) { //Drop the piece after the servo arrives the position
+                        TOOL_OFF;
+                        tool_used = false;
+                        pcbs++;
+                        if (pcbs <= 4){
+                            current_state = STATE_PICK_CASE;
+                        } else {
+                            current_state = STATE_HOMING;
+                        }
+                    }
+                }
                 break;
             default:
                 break;

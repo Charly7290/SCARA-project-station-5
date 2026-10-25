@@ -1,12 +1,27 @@
 # SCARA-project-station-5
 ### **Comandos de ejecución dentro de SCARA_Project/SCARA-project-station-5:**
+**Terminal 1:** \
 curl -fsSL https://get.docker.com | sudo sh #Descargar Docker\
 ./tools/microros_bringup/run_agent.sh #Ejecutar Agente MicroROS\
+**Terminal 2:** \
+source /opt/ros/jazzy/setup.bash \
 ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'STOP'" --once #Detener SCARA\
 ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'HOME'" --once #Enviar SCARA a estado Home\
 ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'MANUAL'" --once #Enviar SCARA a estado Manual\
 ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'GO TO: 15, 15, 0, ON'" --once #coordenadas de acuerdo al W-Space del SCARA y la activación de la herramienta, es decir, GO TO: x, y, z, ON/OFF\
-ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'PICK&PLACE'" --once #El SCARA hará su respectiva tarea\
+ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'PICK&PLACE'" --once #El SCARA hará su respectiva tarea
+
+### **Comandos de ejecución para el sistema IoT:**
+En computador: Raspberry Pi Pico --> agente --> /scara_telemetry topic --> bridge.js --> Mosquitto --> server.js --> MariaDB --> Grafana \
+Las siguientes carpetas pueden estar en Home o ~/, no necesariamente en este mismo workspace: \
+**Terminal 3:** \
+mosquitto_sub -h localhost -u scara -P KMComp111805. -t 'scara/#' -v \
+**Terminal 4:** \
+cd ~/iot && node server.js \
+**Terminal 5:** \
+source /opt/ros/jazzy/setup.bash \
+cd ~/scara-bridge && node bridge.js
+
 
 # **Descripción de los módulos de software**
 

@@ -17,6 +17,12 @@ rcl_subscription_t subscriber;
 //A string message for States:
 std_msgs__msg__String msg;
 char buffer[64];
+
+//Create a publisher for the telemetry IoT system (ROS2 --> MQTT --> server.js --> MariaDB --> Grafana) 
+rcl_publisher_t telemetry_pub;
+std_msgs__msg__String telemetry_msg;
+char telemetry_buf[128];
+
 float coord_x = 0.0f;
 float coord_y = 0.0f;
 float coord_z = 0.0f;
@@ -32,8 +38,7 @@ typedef enum { //States
     STATE_PICK_CASE,
     STATE_PLACE_CASE,
     STATE_PICK_PCB,
-    STATE_INSERT_PCB,
-    STATE_ALARM
+    STATE_INSERT_PCB
 } scara_state_t;
 volatile scara_state_t current_state = STATE_INIT;
 
@@ -78,6 +83,23 @@ const uint64_t goto_timeout_us = 15000000ULL;
 
 
 float encoder_degrees_M1, encoder_degrees_M2;
+
+static void publish_telemetry(int pcbs, th theta){ // IoT
+    // encoder_degrees_M1/M2 are only updated in HOMING and goToPoint, so calculate them again: 
+    float degreesM1 = encoder_count[0] * 360.0f / 3200.0f;
+    float m1 = encoder_sign_M1 * degreesM1 / pulley_ratio_M1; //actual joint angle1
+    float degreesM2 = encoder_count[1] * 360.0f / 3200.0f;
+    float m2 = encoder_sign_M2 * degreesM2 / pulley_ratio_M2; //actual joint angle2
+
+    int n = snprintf(telemetry_buf, sizeof(telemetry_buf),
+                     "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f",
+                     (int)current_state, pcbs, m1, m2,
+                     theta.theta1, theta.theta2, theta.theta_prism);
+    if (n <= 0 || n >= (int)sizeof(telemetry_buf)) return; //out of bounds
+
+    telemetry_msg.data.size = n;
+    rcl_publish(&telemetry_pub, &telemetry_msg, NULL);
+}
 
 static bool jog_limit_hit(int motor, int dir){
     if (motor == 0) return (dir == DIR_CW) ? M1_CW_LIMIT_HIT : M1_CCW_LIMIT_HIT;
@@ -376,6 +398,15 @@ int main(void){
     rclc_executor_init(&executor, &support.context, 1, &allocator);
     rclc_executor_add_subscription(&executor, &subscriber, &msg, &cmd_callback, ON_NEW_DATA);
 
+    //Publisher for IoT system
+    telemetry_msg.data.data = telemetry_buf;
+    telemetry_msg.data.capacity = sizeof(telemetry_buf);
+    telemetry_msg.data.size = 0;
+    rclc_publisher_init_best_effort(   //best effort so that it never waits --> otherwise, it could stall the motor loop if the link is slow or lost.
+        &telemetry_pub, &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
+        "scara_telemetry");
+
     init_servo();
     init_tool();
     init_limitS(LIMIT_SWITCH_0_L1);
@@ -392,11 +423,13 @@ int main(void){
     gpio_set_dir(LED_PIN, GPIO_OUT);
 
     bool l1_calib, l1_homed, l2_calib, l2_homed;
-    th theta;
+    th theta = {0};
     int pcbs = 1; //This SCARA's task: Pick&Place of four PCBs with cases;
     
     uint64_t last_time = time_us_64();
-    scara_state_t last_reported_state = STATE_INIT;
+    uint64_t last_telemetry_us = 0;
+    uint64_t t_tel;
+    scara_state_t last_reported_state = STATE_INIT;    
 
     current_state = STATE_IDLE;
     while(1){
@@ -618,6 +651,11 @@ int main(void){
                 break;
             default:
                 break;
+        }
+        t_tel = time_us_64();
+        if (t_tel - last_telemetry_us >= 200000) {
+            last_telemetry_us = t_tel;
+            publish_telemetry(pcbs, theta); //publish the data of SCARA's main variables every 200ms to the IoT system, displayed in Grafana  
         }
     }
 

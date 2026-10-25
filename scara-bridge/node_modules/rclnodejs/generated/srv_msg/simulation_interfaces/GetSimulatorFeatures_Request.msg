@@ -1,0 +1,3 @@
+# Get a list of features supported by the simulator.
+# Simulators adhering to the standard need to implement at least this interface.
+

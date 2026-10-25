@@ -1,0 +1,6 @@
+# See rosbag2_transport::PlayOptions::start_offset
+builtin_interfaces/Time start_offset
+# See rosbag2_transport::PlayOptions::playback_duration
+builtin_interfaces/Duration playback_duration
+# See rosbag2_transport::PlayOptions::playback_until_timestamp
+builtin_interfaces/Time playback_until_timestamp

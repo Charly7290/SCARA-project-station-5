@@ -1,0 +1,3 @@
+# Gets the simulation state (paused, playing, stopped)
+# Support for this interface is indicated through the SIMULATION_STATE_GETTING value in GetSimulationFeatures.
+

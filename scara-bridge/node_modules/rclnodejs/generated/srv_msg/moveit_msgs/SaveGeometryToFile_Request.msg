@@ -1,0 +1,2 @@
+# This service saves the CollisionObjects present in a PlanningScene to a .scene file
+string file_path_and_name

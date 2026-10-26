@@ -12,15 +12,102 @@ ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'GO TO: 15, 15, 0, ON'" --o
 ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'PICK&PLACE'" --once #El SCARA hará su respectiva tarea
 
 ### **Comandos de ejecución para el sistema IoT:**
-En computador: Raspberry Pi Pico --> agente --> /scara_telemetry topic --> bridge.js --> Mosquitto --> server.js --> MariaDB --> Grafana \
-Las siguientes carpetas pueden estar en Home o ~/, no necesariamente en este mismo workspace: \
-**Terminal 3:** \
-mosquitto_sub -h localhost -u scara -P KMComp111805. -t 'scara/#' -v \
-**Terminal 4:** \
-cd ~/iot && node server.js \
-**Terminal 5:** \
+En computador: Raspberry Pi Pico --> agente --> /scara_telemetry topic --> bridge.js --> Mosquitto --> server.js --> MariaDB --> Grafana 
+
+**INSTALACIONES PARA IOT:**\
+**Mosquitto:**\
+sudo apt update\
+sudo apt install -y mosquitto mosquitto-clients\
+sudo mosquitto_passwd -c /etc/mosquitto/passwd scara   # pide la contraseña \
+sudo tee /etc/mosquitto/conf.d/scara.conf <<'EOF'\
+listener 1883\
+allow_anonymous false\
+password_file /etc/mosquitto/passwd\
+EOF\
+sudo chown mosquitto:mosquitto /etc/mosquitto/passwd\
+sudo chmod 640 /etc/mosquitto/passwd\
+sudo systemctl enable mosquitto\
+sudo systemctl restart mosquitto\
+systemctl is-active mosquitto    # debe imprimir: active
+
+**Node.js:**\
+sudo apt install -y curl\
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -\
+sudo apt install -y nodejs\
+node -v    # 20.20.2 o superior
+
+**MariaDB, Apache, PHP y phpMyAdmin:**\
+
+sudo apt install -y apache2 mariadb-server php libapache2-mod-php php-mysql\
+sudo systemctl enable --now apache2 mariadb\
+sudo mysql_secure_installation\
+sudo apt install -y phpmyadmin php-mbstring\
+
+- `mysql_secure_installation`: en "current password" pulse Enter; responda `n` a
+  unix_socket y a cambiar la contraseña de root, y `Y` a todo lo demás.
+- phpMyAdmin: servidor web `apache2`; configurar la base con dbconfig-common: `yes`;
+  deje vacías las contraseñas.
+
+**Base de datos y usuario:**\
+
+Ejecute `sudo mariadb` y escriba (reemplace `<DB_PASS>`): \
+
+*SQL*\
+CREATE DATABASE IF NOT EXISTS scara;\
+CREATE USER IF NOT EXISTS 'scara'@'%' IDENTIFIED BY '<DB_PASS>';\
+GRANT ALL PRIVILEGES ON scara.* TO 'scara'@'%';\
+FLUSH PRIVILEGES;\
+USE scara;\
+CREATE TABLE `values` (
+  ID INT AUTO_INCREMENT PRIMARY KEY,\
+  numeric_value DOUBLE NOT NULL,\
+  source_id INT NOT NULL,\
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\
+);\
+EXIT;
+
+**Grafana**\
+sudo apt install -y apt-transport-https wget gpg\
+sudo mkdir -p /etc/apt/keyrings\
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null\
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list\
+sudo apt update\
+sudo apt install -y grafana\
+sudo systemctl enable --now grafana-server\
+
+Abra http://localhost:3000 (admin / admin la primera vez). Agregue un origen de datos\
+MySQL: host `127.0.0.1:3306`, base `scara`, usuario `scara`.
+
+**Entorno de ROS2**\
+
+echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc\
+
+**Dependencias de Node y contraseñas**\
+
+Desde la raíz del repositorio (ROS 2 debe estar cargado antes de instalar `scara-bridge`):\
+
+source /opt/ros/jazzy/setup.bash\
+cd iot && npm install && cp .env.example .env && cd ..\
+cd scara-bridge && npm install && cp .env.example .env && cd ..\
+
+Edite los dos archivos `.env` con las contraseñas reales. Estos archivos no se suben a git.\
+
+**Verificación**
+
+- `systemctl is-active mosquitto apache2 mariadb grafana-server` imprime `active` cuatro veces.
+- http://localhost/phpmyadmin permite entrar con el usuario `scara`.
+- `mariadb -u scara -p -h 127.0.0.1` abre la consola de MariaDB.
+
+**Terminal 3: escritor de la base de datos** \
+cd iot && node --env-file=.env server.js 
+
+**Terminal 4: puente ROS 2 a MQTT** \
 source /opt/ros/jazzy/setup.bash \
-cd ~/scara-bridge && node bridge.js
+cd scara-bridge && node --env-file=.env bridge.js 
+
+**Terminal 5 (opcional): ver los mensajes MQTT**
+mosquitto_sub -h localhost -u scara -P <MQTT_PASS> -t 'scara/#' -v 
+
 
 
 # **Descripción de los módulos de software**

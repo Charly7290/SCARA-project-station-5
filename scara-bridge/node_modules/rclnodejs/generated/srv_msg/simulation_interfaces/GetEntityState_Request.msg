@@ -1,5 +1,0 @@
-# Get state of an entity.
-# Support for this interface is indicated through the ENTITY_STATE_GETTING value in GetSimulationFeatures.
-
-string entity                         # Entity identified by its unique name as returned by GetEntities / SpawnEntity.
-

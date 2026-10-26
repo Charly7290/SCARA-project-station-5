@@ -2,8 +2,9 @@ const rclnodejs = require('rclnodejs');
 const mqtt = require('mqtt');
 
 const MQTT_URL   = 'mqtt://localhost:1883';
-const MQTT_USER  = 'scara';
-const MQTT_PASS  = 'KMComp111805.';
+const MQTT_USER  = process.env.MQTT_USER || 'scara';
+const MQTT_PASS  = process.env.MQTT_PASS;
+if (!MQTT_PASS) { console.error('Set MQTT_PASS in .env'); process.exit(1); }
 const MQTT_TOPIC = 'scara/telemetry';
 const ROS_TOPIC  = 'scara_telemetry';
 

@@ -76,7 +76,8 @@ sudo apt install -y grafana\
 sudo systemctl enable --now grafana-server\
 
 Abra http://localhost:3000 (admin / admin la primera vez). Agregue un origen de datos\
-MySQL: host `127.0.0.1:3306`, base `scara`, usuario `scara`.
+MySQL: host `127.0.0.1:3306`, base `scara`, usuario `scara`.\
+Importar dashboard de grafana/scara-dashboard.json para mostrar las respectivas gráficas para cada variable del SCARA.
 
 **Entorno de ROS2**\
 

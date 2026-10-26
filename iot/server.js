@@ -83,13 +83,17 @@ app.use(express.json());
 
 const PORT = 3001;
 
-// DAtabase connection
+// Database connection
 const dbConfig = {
-    host: 'localhost',
-    user: 'scara',
-    password: 'SCARA_Project',
-    database: 'scara'
+    host: process.env.DB_HOST || '127.0.0.1',
+    user: process.env.DB_USER || 'scara',
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME || 'scara'
 };
+if (!dbConfig.password || !process.env.MQTT_PASS) {
+    console.error('Set DB_PASS and MQTT_PASS in .env');
+    process.exit(1);
+}
 
 // Connect to the database
 const pool = mysql.createPool(dbConfig);
@@ -181,9 +185,9 @@ app.delete('/api/values/:id', async (req, res) => {
 
 //MQTT part
 
-const mqttClient = mqtt.connect('mqtt://localhost:1883', {
-    username: 'scara',
-    password: 'KMComp111805.'
+const mqttClient = mqtt.connect(process.env.MQTT_URL || 'mqtt://localhost:1883', {
+    username: process.env.MQTT_USER || 'scara',
+    password: process.env.MQTT_PASS
 });
 mqttClient.on('error', (e) => console.error('MQTT error:', e.message));
 

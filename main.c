@@ -257,7 +257,7 @@ static void cmd_callback(const void *msgin) {
 
 static th defineAngles(float point_X, float point_Y, float point_Z){ //Get the angles from calculations
     if (zero) set_servo_angle(45);
-    zero = (point_Z <= 0);
+    zero = (point_Z <= 1.0f);
 
     th anglesM = calculateIK(point_X, point_Y, point_Z);
     if(!isfinite(anglesM.theta1) || !isfinite(anglesM.theta2) || anglesM.theta1 == 180.0f || anglesM.theta2 == 180.0f){ //Out of joint limitations
@@ -483,21 +483,21 @@ int main(void){
                     theta = defineAngles(coord_x, coord_y, coord_z);
                     break;
                 case STATE_PICK_CASE:
-                    theta = defineAngles(28.07f, 5.0f, -1.0f);
+                    theta = defineAngles(28.07f, 5.0f, 0.0f);
                     break;
                 case STATE_PLACE_CASE:
                     switch(pcbs){
                         case 1:
-                            theta = defineAngles(28.07f, -5.0f, -1.0f);
+                            theta = defineAngles(28.07f, -5.0f, 0.0f);
                             break;
                         case 2:
-                            theta = defineAngles(24.79f, -10.0f, -1.0f);
+                            theta = defineAngles(24.79f, -10.0f, 0.0f);
                             break;
                         case 3:
-                            theta = defineAngles(20.19f, -13.0f, -1.0f);
+                            theta = defineAngles(20.19f, -13.0f, 0.0f);
                             break;
                         case 4:
-                            theta = defineAngles(15.0f, -14.0f, -1.0f);
+                            theta = defineAngles(15.0f, -14.0f, 0.0f);
                             break;
                         default:
                             break;
@@ -509,16 +509,16 @@ int main(void){
                 case STATE_INSERT_PCB:
                     switch(pcbs){
                         case 1:
-                            theta = defineAngles(28.07f, -5.0f, -1.0f);
+                            theta = defineAngles(28.07f, -5.0f, 1.0f);
                             break;
                         case 2:
-                            theta = defineAngles(24.79f, -10.0f, -1.0f);
+                            theta = defineAngles(24.79f, -10.0f, 1.0f);
                             break;
                         case 3:
-                            theta = defineAngles(20.19f, -13.0f, -1.0f);
+                            theta = defineAngles(20.19f, -13.0f, 1.0f);
                             break;
                         case 4:
-                            theta = defineAngles(15.0f, -14.0f, -1.0f);
+                            theta = defineAngles(15.0f, -14.0f, 1.0f);
                             break;
                         default:
                             break;
@@ -624,6 +624,9 @@ int main(void){
                     if ((time_us_64() - drop_now >= 2000000ULL)) { //Drop the piece after the servo arrives the position
                         TOOL_OFF;
                         tool_used = false;
+                        set_servo_angle(45);
+                    }
+                    if ((time_us_64() - drop_now >= 3000000ULL)) { //after an extra 1s, go to the next state
                         current_state = STATE_PICK_PCB;
                     }
                 }
@@ -640,6 +643,9 @@ int main(void){
                     if ((time_us_64() - drop_now >= 2000000ULL)) { //Drop the piece after the servo arrives the position
                         TOOL_OFF;
                         tool_used = false;
+                        set_servo_angle(45);
+                    }
+                    if ((time_us_64() - drop_now >= 3000000ULL)) { //after an extra 1s, go to the next state
                         pcbs++;
                         if (pcbs <= 4){
                             current_state = STATE_PICK_CASE;

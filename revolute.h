@@ -33,4 +33,10 @@ typedef struct{
     float theta2;
     float theta_prism;
 } th;
+typedef struct{
+    float x_now;
+    float y_now;
+    float z_now;
+} coordinates;
 th calculateIK(float p_x, float p_y, float p_z);
+coordinates calculateFK(float th1, float th2, float th3);

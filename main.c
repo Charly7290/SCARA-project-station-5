@@ -90,11 +90,12 @@ static void publish_telemetry(int pcbs, th theta){ // IoT
     float m1 = encoder_sign_M1 * degreesM1 / pulley_ratio_M1; //actual joint angle1
     float degreesM2 = encoder_count[1] * 360.0f / 3200.0f;
     float m2 = encoder_sign_M2 * degreesM2 / pulley_ratio_M2; //actual joint angle2
+    coordinates pos = calculateFK(m1, m2, theta.theta_prism);
 
     int n = snprintf(telemetry_buf, sizeof(telemetry_buf),
-                     "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f",
+                     "%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f",
                      (int)current_state, pcbs, m1, m2,
-                     theta.theta1, theta.theta2, theta.theta_prism);
+                     theta.theta1, theta.theta2, theta.theta_prism, pos.x_now, pos.y_now, pos.z_now);
     if (n <= 0 || n >= (int)sizeof(telemetry_buf)) return; //out of bounds
 
     telemetry_msg.data.size = n;

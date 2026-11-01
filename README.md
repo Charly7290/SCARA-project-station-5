@@ -12,6 +12,17 @@ ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'GO TO: 15, 15, 0, ON'" --o
 ros2 topic pub /scara_cmd std_msgs/msg/String "data: 'PICK&PLACE'" --once #El SCARA hará su respectiva tarea
 
 ### **Comandos de ejecución para el sistema IoT:**
+En Raspberry Pi 4, conectado por WIFI y entrando por SSH: 
+Terminal 1: MicroROS
+source /opt/ros/jazzy/setup.bash
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200
+
+Terminal 2: bridge
+source /opt/ros/jazzy/setup.bash
+cd ~/SCARA-project-station-5/scara-bridge && node --env-file=.env bridge.js
+
+(Recordar apagarla antes de desconectar su cable de alimentación: sudo shutdown -h now)
+
 En computador: Raspberry Pi Pico --> agente --> /scara_telemetry topic --> bridge.js --> Mosquitto --> server.js --> MariaDB --> Grafana 
 
 **INSTALACIONES PARA IOT:**\

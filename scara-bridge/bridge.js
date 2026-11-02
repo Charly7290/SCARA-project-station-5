@@ -24,6 +24,9 @@ const VARS = [
   { id: 5, name: 'theta1',     deadband: 0.01, heartbeat: 10000 },
   { id: 6, name: 'theta2',     deadband: 0.01, heartbeat: 10000 },
   { id: 7, name: 'theta_prism', deadband: 0.01, heartbeat: 10000 },
+  { id: 8, name: 'x_now', deadband: 0.01, heartbeat: 100 },
+  { id: 9, name: 'y_now', deadband: 0.01, heartbeat: 100 },
+  { id: 10, name: 'z_now', deadband: 0.01, heartbeat: 100 },
 ];
 const last = {};   // id -> { value, t }
 

@@ -6,10 +6,10 @@
 
 #define PWM_M1 2 //D6
 #define PWM_M2 3 //D11
-#define AIN1_DIR_M1 8 //D7, CW
-#define AIN2_DIR_M1 9 //D8, CCW
-#define BIN1_DIR_M2 4 //D9, CW
-#define BIN2_DIR_M2 5 //D10, CCW
+#define AIN1_DIR_M1 5 //D7, CW
+#define AIN2_DIR_M1 4 //D8, CCW
+#define BIN1_DIR_M2 8 //D9, CW
+#define BIN2_DIR_M2 9 //D10, CCW
 
 #define ENCODER_A_M1 10
 #define ENCODER_B_M1 11

@@ -1,0 +1,87 @@
+<?xml version='1.0'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="arm_ando">
+
+
+    <xacro:property name="m_scale" value="0.001"/>
+    <xacro:property name="mesh_path" value="package://scara_description/meshes"/>
+
+    <material name="gris">
+        <color rgba="0.6 0.6 0.65 1"/>
+    </material>
+    <material name="azul">
+        <color rgba="0.2 0.45 0.9 1"/>
+    </material>
+    <material name="naranja">
+        <color rgba="0.95 0.5 0.1 1"/>
+    </material>
+    <material name="verde">
+        <color rgba="0.2 0.75 0.3 1"/>
+    </material>
+
+
+    <xacro:macro name="stl_link" params="link_name x0 y0 z0 cx cy cz filename ixx iyy izz roll pitch yaw mass color:='gris'">
+        <link name="${link_name}">
+            <visual>
+                <geometry>
+                    <mesh filename="${mesh_path}/${filename}.stl" scale="${m_scale} ${m_scale} ${m_scale}"/>
+                </geometry>
+                <origin xyz="${x0*m_scale} ${y0*m_scale} ${z0*m_scale}" rpy="${roll} ${pitch} ${yaw}"/>
+                <material name="${color}"/>
+            </visual>
+
+            <inertial>
+                <mass value="${mass}"/>
+                <origin xyz="${(x0+cx)*m_scale} ${(y0+cy*cos(roll)-cz*sin(roll))*m_scale} ${(z0+cy*sin(roll)+cz*cos(roll))*m_scale}"
+                        rpy="${roll} ${pitch} ${yaw}"/>
+                <inertia ixx="${ixx*mass}" ixy="0" ixz="0" iyy="${iyy*mass}" iyz="0" izz="${izz*mass}"/>
+            </inertial>
+
+            <collision>
+                <geometry>
+                    <mesh filename="${mesh_path}/${filename}.stl" scale="${m_scale} ${m_scale} ${m_scale}"/>
+                </geometry>
+                <origin xyz="${x0*m_scale} ${y0*m_scale} ${z0*m_scale}" rpy="${roll} ${pitch} ${yaw}"/>
+            </collision>
+        </link>
+</xacro:macro>
+
+
+    <xacro:stl_link link_name='base_link' x0='-216' y0='-62.6' z0='6' cx='132.5' cy='126.51' cz='-40.379' filename='BasedelSCARA' ixx='0.004745' iyy='0.008153' izz='0.006800' roll='${pi/2}' pitch='0' yaw='0' mass='3' color='gris'/>
+    <xacro:stl_link link_name='brazo1_link' x0='150' y0='2.043' z0='2.043' cx='-75' cy='50.906' cz='-2.009' filename='Brazo1' ixx='0.000685' iyy='0.003975' izz='0.004060' roll='${pi/2}' pitch='0' yaw='0' mass='0.5' color='azul'/>
+    <xacro:stl_link link_name='brazo2_link' x0='0' y0='0' z0='0' cx='67.009' cy='49' cz='11.75' filename='Brazo2' ixx='0.000975' iyy='0.003436' izz='0.003811' roll='${pi/2}' pitch='0' yaw='0' mass='0.2' color='naranja'/>
+    <xacro:stl_link link_name='prismatico_link' x0='0' y0='3.00 ' z0='80.00' cx='0' cy='-29.75' cz='-16.903' filename='Prismatico' ixx='6.433e-3' iyy='2.760e-4' izz='6.310e-3' roll='${pi/2}' pitch='0' yaw='0' mass='0.3' color='verde'/>
+
+    <joint name="joint1" type="revolute">
+        <parent link="base_link"/>
+        <child link="brazo1_link"/>
+        <origin xyz="0 0 0.155" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-1.8483" upper="1.8483" effort="10" velocity="1"/>
+    </joint>
+
+        <joint name="joint2" type="revolute">
+        <parent link="brazo1_link"/>
+        <child link="brazo2_link"/>
+        <origin xyz="${150.206*m_scale} ${-0.141*m_scale} ${(-9.875-7)*m_scale}" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-2.2689" upper="2.2689" effort="10" velocity="1"/>
+    </joint>
+
+    <joint name="joint_prismatica" type="prismatic">
+        <parent link="brazo2_link"/>
+        <child link="prismatico_link"/>
+        <origin xyz="${122.204*m_scale} 0 ${-14*m_scale}" rpy="0 0 ${-pi/2}"/>
+        <axis xyz="0 0 1"/>
+        <limit effort="1" lower="${-62.8*m_scale}" upper="0" velocity="1"/>
+        <dynamics damping="0.000002" friction="0.000001"/>
+    </joint>
+
+    <!-- Tool tip (lowest point of Prismatico.stl): 151 mm from joint2 -->
+    <link name="tool_tip"/>
+    <joint name="tool_tip_joint" type="fixed">
+        <parent link="prismatico_link"/>
+        <child link="tool_tip"/>
+        <origin xyz="0 ${28.8*m_scale} ${-59.5*m_scale}" rpy="0 0 ${pi/2}"/>
+    </joint>
+
+</robot>

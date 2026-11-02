@@ -23,6 +23,10 @@ void set_servo_angle(int angle_deg){
     servo_write_angle((float)angle_deg);
 }
 
+float servo_get_angle(void){
+    return servo_angle_deg;
+}
+
 void servo_move_rate(float deg_per_s, float dt_s){
     if (deg_per_s == 0.0f || dt_s <= 0.0f) return;
     servo_write_angle(servo_angle_deg + deg_per_s * dt_s);

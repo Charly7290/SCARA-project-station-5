@@ -1,0 +1,13 @@
+# Parameters for joint_bridge and target_ghost (both read the same file)
+# Live test: ros2 param set /scara_joint_bridge sign_j1 -1.0   (use decimals)
+# When it looks right, write the value here and relaunch
+/**:
+  ros__parameters:
+    sign_j1: 1.0          # firmware encoder_sign = +1 since 2026-11-02 (same convention as URDF)
+    sign_j2: 1.0          # -1.0 only if a joint turns opposite to the real robot
+    offset_j1_deg: 0.0    # added to J1 if the twin is rotated at HOME
+    offset_j2_deg: 0.0
+    gear_radius_m: 0.020  # servo pinion (same as gear_radius in revolute.c)
+    z_min_m: -0.0628      # Z stroke, URDF limit
+    servo_max_dps: 300.0  # servo speed model in the twin (joint_bridge only), 0 = instant
+    timeout_s: 1.0

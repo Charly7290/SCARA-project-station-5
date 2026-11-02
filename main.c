@@ -12,6 +12,7 @@
 // Custom transport over UART (for Pico platform)
 #include <rmw_microros/rmw_microros.h>
 #include "pico_uart_transports.h"
+#include <std_msgs/msg/float32_multi_array.h>
 
 // Declare a global subscriber instance
 rcl_subscription_t subscriber;
@@ -23,6 +24,11 @@ char buffer[64];
 rcl_publisher_t telemetry_pub;
 std_msgs__msg__String telemetry_msg;
 char telemetry_buf[128];
+
+//Publisher for the digital twin in RViz (scara_twin package)
+rcl_publisher_t joints_pub;
+std_msgs__msg__Float32MultiArray joints_msg;
+float joints_buf[5]; //[joint 1 (deg), joint 2 (deg), servo (deg), homed, vacuum]
 
 float coord_x = 0.0f;
 float coord_y = 0.0f;
@@ -68,8 +74,8 @@ static volatile bool jog_block_ccw[2] = {false, false};       //CCW blocked unti
 bool tool, m1_moved, m2_moved; 
 uint64_t goto_start_time = 0;
 
-const float encoder_sign_M1 = -1.0f;
-const float encoder_sign_M2 = -1.0f;
+const float encoder_sign_M1 = 1.0f; //+1: positive = arm CCW seen from above (same as IK and URDF)
+const float encoder_sign_M2 = 1.0f;
 //Due to the relationship between the pulleys: consider s=rθ
 extern const float pulley_ratio_M1 = 60.0f/28.0f; // based on the timing pulley teeth and tests made
 extern const float pulley_ratio_M2 = 60.0f/20.0f; // based on the timing pulley teeth 
@@ -101,6 +107,15 @@ static void publish_telemetry(int pcbs, th theta){ // IoT
 
     telemetry_msg.data.size = n;
     rcl_publish(&telemetry_pub, &telemetry_msg, NULL);
+}
+
+static void publish_joints(void){ // Digital twin
+    joints_buf[0] = encoder_sign_M1 * (encoder_count[0] * 360.0f / 3200.0f) / pulley_ratio_M1; //actual joint angle1
+    joints_buf[1] = encoder_sign_M2 * (encoder_count[1] * 360.0f / 3200.0f) / pulley_ratio_M2; //actual joint angle2
+    joints_buf[2] = servo_get_angle(); //commanded, the servo has no feedback
+    joints_buf[3] = robot_homed ? 1.0f : 0.0f;
+    joints_buf[4] = (gpio_get_out_level(TOOL) == 0) ? 1.0f : 0.0f; //inverted logic, 0 = vacuum ON
+    rcl_publish(&joints_pub, &joints_msg, NULL);
 }
 
 static bool jog_limit_hit(int motor, int dir){
@@ -299,7 +314,7 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
     ControlOutput u = salidas(angleM1*pulley_ratio_M1*DEG_TO_RAD, current_M1*pulley_ratio_M1*DEG_TO_RAD, angleM2*pulley_ratio_M2*DEG_TO_RAD, current_M2*pulley_ratio_M2*DEG_TO_RAD);
     const float U_DZ_M1 = 10.0f;    // duty donde empieza a moverse M1 (ajústenlo)
 
-    const float U_DZ_M2 = 4.0f;    // duty donde empieza a moverse M2 (ajústenlo)
+    const float U_DZ_M2 = 10.0f;    // duty donde empieza a moverse M2 (ajústenlo)
     const float U_MAX   = 17.6f;   // misma saturación del controlador
     const float U_EPS   = 0.05f;   // por debajo de esto no se mueve (evita temblor cerca de 0)
 
@@ -448,6 +463,19 @@ int main(void){
         ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
         "scara_telemetry");
 
+    //Publisher for the digital twin
+    joints_msg.data.data = joints_buf;
+    joints_msg.data.capacity = 5;
+    joints_msg.data.size = 5;
+    joints_msg.layout.dim.data = NULL; //no layout, just 5 values
+    joints_msg.layout.dim.size = 0;
+    joints_msg.layout.dim.capacity = 0;
+    joints_msg.layout.data_offset = 0;
+    rclc_publisher_init_best_effort(
+        &joints_pub, &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray),
+        "scara_joints");
+
     init_servo();
     init_tool();
     init_limitS(LIMIT_SWITCH_0_L1);
@@ -469,6 +497,7 @@ int main(void){
     
     uint64_t last_time = time_us_64();
     uint64_t last_telemetry_us = 0;
+    uint64_t last_joints_us = 0;
     uint64_t t_tel;
     scara_state_t last_reported_state = STATE_INIT;    
 
@@ -703,6 +732,10 @@ int main(void){
         if (t_tel - last_telemetry_us >= 200000) {
             last_telemetry_us = t_tel;
             publish_telemetry(pcbs, theta); //publish the data of SCARA's main variables every 200ms to the IoT system, displayed in Grafana  
+        }
+        if (t_tel - last_joints_us >= 50000) { //20 Hz for the digital twin
+            last_joints_us = t_tel;
+            publish_joints();
         }
     }
 

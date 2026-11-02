@@ -9,3 +9,8 @@ node_modules/
 
 node_modules/
 .env
+
+# colcon
+ros2/build/
+ros2/install/
+ros2/log/

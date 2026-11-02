@@ -31,8 +31,8 @@ class TargetGhost(Node):
         super().__init__('scara_target_ghost')
 
         # Same conversion as joint_bridge (launch passes the same values to both)
-        self.declare_parameter('sign_j1', -1.0)
-        self.declare_parameter('sign_j2', -1.0)
+        self.declare_parameter('sign_j1', 1.0)
+        self.declare_parameter('sign_j2', 1.0)
         self.declare_parameter('offset_j1_deg', 0.0)
         self.declare_parameter('offset_j2_deg', 0.0)
         self.declare_parameter('gear_radius_m', 0.020)

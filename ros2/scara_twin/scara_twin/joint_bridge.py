@@ -30,8 +30,8 @@ class JointBridge(Node):
         super().__init__('scara_joint_bridge')
 
         # Signs and offsets to match the URDF (tune here, no reflash needed)
-        self.declare_parameter('sign_j1', -1.0)
-        self.declare_parameter('sign_j2', -1.0)
+        self.declare_parameter('sign_j1', 1.0)
+        self.declare_parameter('sign_j2', 1.0)
         self.declare_parameter('offset_j1_deg', 0.0)
         self.declare_parameter('offset_j2_deg', 0.0)
         self.declare_parameter('gear_radius_m', 0.020)  # servo pinion, same as the firmware IK

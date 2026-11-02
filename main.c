@@ -525,7 +525,7 @@ int main(void){
                     tool_used = false;
                     CCW_M1;
                     CW_M2;
-                    move_motor(PWM_M1, 0);
+                    move_motor(PWM_M1, 900);
                     STOP_M1;
                     move_motor(PWM_M2, 900);
                     servo_home();
@@ -626,12 +626,10 @@ int main(void){
                 if (SWITCH_0_L2_ON && l2_calib == false){
                     move_motor(PWM_M2, 0);
                     STOP_M2;
-                    CCW_M1;
-                    move_motor(PWM_M1, 900);
                     l2_calib = true;
                     encoder_count[1] = 0; //Reset value of motor 2's encoder
                 }
-                if (SWITCH_0_L1_ON && l1_calib == false && l2_calib == true){
+                if (SWITCH_0_L1_ON && l1_calib == false){
                     move_motor(PWM_M1, 0);
                     STOP_M1;
                     l1_calib = true;

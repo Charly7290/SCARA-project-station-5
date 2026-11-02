@@ -128,29 +128,41 @@ class TargetGhost(Node):
         sphere.pose.orientation.w = 1.0
         sphere.scale.x = sphere.scale.y = sphere.scale.z = 0.012
         sphere.color.r, sphere.color.g, sphere.color.b, sphere.color.a = 1.0, 0.4, 0.0, 0.9
-        text = Marker()
-        text.header = sphere.header
-        text.ns, text.id = 'ghost', 1
-        text.type = Marker.TEXT_VIEW_FACING
-        text.pose.position.z = 0.09  # above the ghost tool
-        text.pose.orientation.w = 1.0
-        text.scale.z = 0.014
-        text.color.r, text.color.g, text.color.b, text.color.a = 1.0, 0.7, 0.2, 1.0
+        # One short line per marker (state, J1, J2, J3 errors), stacked above the ghost tool
+        texts = []
+        for i in range(4):
+            t = Marker()
+            t.header = sphere.header
+            t.ns, t.id = 'ghost', 1 + i
+            t.type = Marker.TEXT_VIEW_FACING
+            t.pose.position.z = 0.13 - 0.02 * i
+            t.pose.orientation.w = 1.0
+            t.scale.z = 0.015
+            t.color.r, t.color.g, t.color.b, t.color.a = 1.0, 0.7, 0.2, 1.0
+            texts.append(t)
 
         if self._target is None:
             if not self._shown:
                 return  # already hidden
-            sphere.action = text.action = Marker.DELETE
+            for m in [sphere] + texts:
+                m.action = Marker.DELETE
             self._shown = False
         else:
-            sphere.action = text.action = Marker.ADD
-            text.text = STATE_NAMES.get(self._state, str(self._state))
+            for m in [sphere] + texts:
+                m.action = Marker.ADD
+            state = STATE_NAMES.get(self._state, str(self._state))
+            lines = [state, 'J1 ?', 'J2 ?', 'J3 ?']
             if self._actual is not None:
                 e = [t - a for t, a in zip(self._target, self._actual)]
-                text.text += (f'\nerr J1 {math.degrees(e[0]):+.1f} deg  J2 {math.degrees(e[1]):+.1f} deg'
-                              f'  Z {e[2] * 1000:+.1f} mm')
+                lines[1] = f'J1 {math.degrees(e[0]):+.1f} deg'
+                lines[2] = f'J2 {math.degrees(e[1]):+.1f} deg'
+                lines[3] = f'J3 {e[2] * 1000:+.1f} mm'
+                self.get_logger().info(f'{state}: {lines[1]} | {lines[2]} | {lines[3]}',
+                                       throttle_duration_sec=2.0)  # also in the terminal
+            for m, line in zip(texts, lines):
+                m.text = line
             self._shown = True
-        self._mk_pub.publish(MarkerArray(markers=[sphere, text]))
+        self._mk_pub.publish(MarkerArray(markers=[sphere] + texts))
 
 
 def main(args=None):

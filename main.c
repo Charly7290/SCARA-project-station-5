@@ -79,7 +79,7 @@ const float encoder_sign_M2 = 1.0f;
 //Due to the relationship between the pulleys: consider s=rθ
 extern const float pulley_ratio_M1 = 60.0f/28.0f; // based on the timing pulley teeth and tests made
 extern const float pulley_ratio_M2 = 60.0f/20.0f; // based on the timing pulley teeth 
-const float target_M2_home = 130.0f * pulley_ratio_M2, target_M1_home = 106.5f * pulley_ratio_M1; 
+const float target_M2_home = 131.0f * pulley_ratio_M2, target_M1_home = 103.0f * pulley_ratio_M1; 
 bool reach_z = false, tool_used = false;
 
 //Point-to-point
@@ -312,9 +312,9 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
     const float DEG_TO_RAD = (float)M_PI / 180.0f;
 
     ControlOutput u = salidas(angleM1*pulley_ratio_M1*DEG_TO_RAD, current_M1*pulley_ratio_M1*DEG_TO_RAD, angleM2*pulley_ratio_M2*DEG_TO_RAD, current_M2*pulley_ratio_M2*DEG_TO_RAD);
-    const float U_DZ_M1 = 10.0f;    // duty donde empieza a moverse M1 (ajústenlo)
+    const float U_DZ_M1 = 15.0f;    // duty donde empieza a moverse M1 (ajústenlo)
 
-    const float U_DZ_M2 = 10.0f;    // duty donde empieza a moverse M2 (ajústenlo)
+    const float U_DZ_M2 = 15.0f;    // duty donde empieza a moverse M2 (ajústenlo)
     const float U_MAX   = 17.6f;   // misma saturación del controlador
     const float U_EPS   = 0.05f;   // por debajo de esto no se mueve (evita temblor cerca de 0)
 

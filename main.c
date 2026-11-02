@@ -526,7 +526,6 @@ int main(void){
                     CCW_M1;
                     CW_M2;
                     move_motor(PWM_M1, 900);
-                    STOP_M1;
                     move_motor(PWM_M2, 900);
                     servo_home();
                     l1_calib = false;

@@ -31,45 +31,44 @@ float Ts = 0.02f;
 
 ///// RST POSICIONAL ////
 // Ganancias RST del motor M1
-float Rp1_M1 = -0.1299948270f;
-float Sp0_M1 = -165.5428786966f;
-float Sp1_M1 = 165.7996000000f;
+float Rp1_M1 = -0.1357240111f;
+float Sp0_M1 = -172.8486976603f;
+float Sp1_M1 = 173.1067648500f;
 float Sp2_M1 = 0.0f;
-float Tp0_M1 = 0.2567005798f;
+float Tp0_M1 = 0.2580671897f;
 // Ganancias RST del motor M2
-float Rp1_M2 = -0.1360196658f;
-float Sp0_M2 = -164.1919757090f;
-float Sp1_M2 = 164.4380427125f;
+float Rp1_M2 = -0.1242737887f;
+float Sp0_M2 = -148.7166112870f;
+float Sp1_M2 = 150.2381178002f;
 float Sp2_M2 = 0.0f;
-float Tp0_M2 =  0.2460670034f;
-
+float Tp0_M2 = 1.5215065133f;
 
 
 // RST INCREMENTAL ////
 // RST INCREMENTAL M1
-float Ri1_M1 = 0.4124916761f;
-float Si0_M1 = 552.4751648599f;
-float Si1_M1 = -1078.3236020223f;
-float Si2_M1 = 526.1051377423f;
-float Ti0_M1 = 0.2567005798f;
+float Ri1_M1 = 0.4180385620f;
+float Si0_M1 = 578.3826276448f;
+float Si1_M1 = -1109.9751847208f;
+float Si2_M1 = 533.1798141995f;
+float Ti0_M1 = 1.5872571236f;
 // RST INCREMENTAL M2
-float Ri1_M2 = 0.4086586913f;
-float Si0_M2 = 519.3165110861f;
-float Si1_M2 = -1013.1095593375f;
-float Si2_M2 =  494.0391152549f ;
-float Ti0_M2 = 0.2460670034f;
+float Ri1_M2 = 0.4142144367f;
+float Si0_M2 = 544.0842243802f;
+float Si1_M2 = -1043.3183317521f;
+float Si2_M2 = 500.7556138852f;
+float Ti0_M2 = 1.5215065133f;
 
 
 
 // RST MASKED ////
 // RST ENMASCARADO COMO PID INCREMENTAL M1
-float q0_M1 = 0.0f;
-float q1_M1 = 0.0f;
-float q2_M1 = 0.0f;
+float q0_M1 = 552.4752f;
+float q1_M1 = -1078.3236f;
+float q2_M1 = 526.1051f;
 // RST ENMASCARADO COMO PID INCREMENTAL M2
-float q0_M2 = 0.0f;
-float q1_M2 = 0.0f;
-float q2_M2 = 0.0f;
+float q0_M2 = 519.3165f;
+float q1_M2 = -1013.1096f;
+float q2_M2 = 494.0391f;
 
 //////////////////////////////////////////////////////////////////////
 

@@ -199,7 +199,7 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
 
 coordinates calculateFK(float th1, float th2, float th3){ //To show in the IoT system; angles in degrees
     coordinates positions;
-    const float l1 = 14.0f, l2 = 15.0f; //Link lenghts, in cm
+    const float l1 = 15.0f, l2 = 15.0f; //Link lenghts, in cm
     const float gear_radius = 4.0f/2.0f; //cm
     const float pz_home = 1.0f * (float)M_PI * 2.0f; //cm; obtained by replacing dist from eq. (1) and p_z = 0cm
     const float d2r = (float)M_PI / 180.0f;

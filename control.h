@@ -14,6 +14,7 @@ typedef struct {
 } ControlOutput;
 //Tolerancia para usarla en todos los archivos
 extern const float tolerance;
+extern ControlMode CONTROL_MODE;
 
 // Funciones del controlador
 ControlOutput salidas(float ref_M1, float enc_M1,

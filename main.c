@@ -312,22 +312,22 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
     const float DEG_TO_RAD = (float)M_PI / 180.0f;
 
     ControlOutput u = salidas(angleM1*pulley_ratio_M1*DEG_TO_RAD, current_M1*pulley_ratio_M1*DEG_TO_RAD, angleM2*pulley_ratio_M2*DEG_TO_RAD, current_M2*pulley_ratio_M2*DEG_TO_RAD);
-    const float U_DZ_M1 = 10.0f;    // duty donde empieza a moverse M1 (ajústenlo aa) 
+    const float U_DZ_M1 = 13.0f;    // duty donde empieza a moverse M1 (ajústenlo aa) 
 
-    const float U_DZ_M2 = 10.0f;    // duty donde empieza a moverse M2 (ajústenlo aa)
+    const float U_DZ_M2 = 13.0f;    // duty donde empieza a moverse M2 (ajústenlo aa)
     const float U_MAX   = 20.0f;   // misma saturación del controlador
-    const float U_EPS   = 0.05f;   // por debajo de esto no se mueve (evita temblor cerca de 0)
+    const float U_EPS = (CONTROL_MODE == CONTROL_PID) ? 0.05f : 2.0f;
 
     float pwmM1 = 0.0f;
     float pwmM2 = 0.0f;
     if (fabsf(u.u1) > U_EPS) {
         float duty1 = U_DZ_M1 + fabsf(u.u1) * (U_MAX - U_DZ_M1) / U_MAX;
-        pwmM1 = fminf(duty1 * 6250.0f / 100.0f, 1100.0f);
+        pwmM1 = fminf(duty1 * 6250.0f / 100.0f, U_MAX * 6250.0f / 100.0f);
     }
 
     if (fabsf(u.u2) > U_EPS) {
         float duty2 = U_DZ_M2 + fabsf(u.u2) * (U_MAX - U_DZ_M2) / U_MAX;
-        pwmM2 = fminf(duty2 * 6250.0f / 100.0f, 1100.0f);
+        pwmM2 = fminf(duty2 * 6250.0f / 100.0f, U_MAX * 6250.0f / 100.0f);
     }
 
 
@@ -346,10 +346,10 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
     } else {
         m1_moved = false;
 
-        if (u.u1 > 0.0f && !M1_CW_LIMIT_HIT) {
+        if (u.u1 > U_EPS && !M1_CW_LIMIT_HIT) {
             CW_M1;
             move_motor(PWM_M1, (int)pwmM1);
-        } else if (u.u1 < 0.0f && !M1_CCW_LIMIT_HIT) {
+        } else if (u.u1 < -U_EPS && !M1_CCW_LIMIT_HIT) {
             CCW_M1;
             move_motor(PWM_M1, (int)pwmM1);
         } else {
@@ -366,10 +366,10 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
     } else {
         m2_moved = false;
 
-        if (u.u2 > 0.0f && !M2_CW_LIMIT_HIT) {
+        if (u.u2 > U_EPS && !M2_CW_LIMIT_HIT) {
             CW_M2;
             move_motor(PWM_M2, (int)pwmM2);
-        } else if (u.u2 < 0.0f && !M2_CCW_LIMIT_HIT) {
+        } else if (u.u2 < -U_EPS && !M2_CCW_LIMIT_HIT) {
             CCW_M2;
             move_motor(PWM_M2, (int)pwmM2);
         } else {

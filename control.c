@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-ControlMode CONTROL_MODE = CONTROL_PID; // Default control mode
+ControlMode CONTROL_MODE = CONTROL_RST_INCREMENTAL; // Default control mode
 //Opciones:
 // CONTROL_PID
 // CONTROL_RST_POSITIONAL
@@ -80,7 +80,7 @@ float integral_M1 = 0.0f;
 float previous_error_M1 = 0.0f;
 float integral_M2 = 0.0f;
 float previous_error_M2 = 0.0f;
-#define Max_antiwindup 17.6f
+#define Max_antiwindup 20.0f
 
 //Variables para que el PID se ejecute solo en el tiempo de muestreo
 static uint64_t last_pid_us = 0;

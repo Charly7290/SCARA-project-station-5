@@ -115,7 +115,7 @@ th calculateIK(float p_x, float p_y, float p_z){ //px, py and pz must be in cm
     }
 
     //  XY-Plane:
-    const float l1 = 14.0f, l2 = 15.0f; //Link lenghts, in cm
+    const float l1 = 15.0f, l2 = 15.0f; //Link lenghts, in cm
     float r = sqrtf(powf(p_x, 2.0f) + powf(p_y, 2.0f));
     float alpha = atan2f(p_y,p_x);
     float th1, th2_p, th1_p, th2, phi;

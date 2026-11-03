@@ -312,10 +312,10 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
     const float DEG_TO_RAD = (float)M_PI / 180.0f;
 
     ControlOutput u = salidas(angleM1*pulley_ratio_M1*DEG_TO_RAD, current_M1*pulley_ratio_M1*DEG_TO_RAD, angleM2*pulley_ratio_M2*DEG_TO_RAD, current_M2*pulley_ratio_M2*DEG_TO_RAD);
-    const float U_DZ_M1 = 15.0f;    // duty donde empieza a moverse M1 (ajústenlo)
+    const float U_DZ_M1 = 10.0f;    // duty donde empieza a moverse M1 (ajústenlo aa) 
 
-    const float U_DZ_M2 = 15.0f;    // duty donde empieza a moverse M2 (ajústenlo)
-    const float U_MAX   = 17.6f;   // misma saturación del controlador
+    const float U_DZ_M2 = 10.0f;    // duty donde empieza a moverse M2 (ajústenlo aa)
+    const float U_MAX   = 20.0f;   // misma saturación del controlador
     const float U_EPS   = 0.05f;   // por debajo de esto no se mueve (evita temblor cerca de 0)
 
     float pwmM1 = 0.0f;
@@ -385,8 +385,9 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
         STOP_M1;
         move_motor(PWM_M2, 0);
         STOP_M2;
-        set_servo_angle(angleServo);
-        if (reach_z == false){
+        if (reach_z == false) {
+            set_servo_angle(angleServo);
+
             if (activate_tool) {
                 TOOL_ON;
                 tool_used = true;
@@ -394,6 +395,7 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
             } else {
                 drop_now = time_us_64();
             }
+
             reach_z = true;
         }
         return true;
@@ -552,42 +554,42 @@ int main(void){
                     theta = defineAngles(coord_x, coord_y, coord_z);
                     break;
                 case STATE_PICK_CASE:
-                    theta = defineAngles(28.07f, 5.0f, 0.0f);
+                    theta = defineAngles(29.14f, 5.0f, 0.0f);
                     break;
                 case STATE_PLACE_CASE:
                     switch(pcbs){
                         case 1:
-                            theta = defineAngles(28.07f, -5.0f, 0.0f);
+                            theta = defineAngles(29.14f, -5.0f, 0.0f);
                             break;
                         case 2:
-                            theta = defineAngles(24.79f, -10.0f, 0.0f);
+                            theta = defineAngles(26.18f, -10.0f, 0.0f);
                             break;
                         case 3:
-                            theta = defineAngles(20.19f, -13.0f, 0.0f);
+                            theta = defineAngles(20.88f, -13.8f, 0.0f);
                             break;
                         case 4:
-                            theta = defineAngles(15.0f, -14.0f, 0.0f);
+                            theta = defineAngles(15.0f, -15.0f, 0.0f);
                             break;
                         default:
                             break;
                     }
                     break;
                 case STATE_PICK_PCB:
-                    theta = defineAngles(15.0f, 14.0f, -1.0f);
+                    theta = defineAngles(15.0f, 15.0f, -1.0f);
                     break;
                 case STATE_INSERT_PCB:
                     switch(pcbs){
                         case 1:
-                            theta = defineAngles(28.07f, -5.0f, 1.0f);
+                            theta = defineAngles(29.14f, -5.0f, 1.0f);
                             break;
                         case 2:
-                            theta = defineAngles(24.79f, -10.0f, 1.0f);
+                            theta = defineAngles(26.18f, -10.0f, 1.0f);
                             break;
                         case 3:
-                            theta = defineAngles(20.19f, -13.0f, 1.0f);
+                            theta = defineAngles(20.88f, -13.8f, 1.0f);
                             break;
                         case 4:
-                            theta = defineAngles(15.0f, -14.0f, 1.0f);
+                            theta = defineAngles(15.0f, -15.0f, 1.0f);
                             break;
                         default:
                             break;
@@ -681,40 +683,57 @@ int main(void){
                 break;
             case STATE_PICK_CASE:
                 if (goToPoint(theta.theta1, theta.theta2, theta.theta_prism, 1)){
-                    if ((time_us_64() - grab_now >= 2000000ULL)) {
+                    if (time_us_64() - grab_now >= 2000000ULL) {
+                        set_servo_angle(45);
+                    }
+
+                    if (time_us_64() - grab_now >= 4000000ULL) {
                         current_state = STATE_PLACE_CASE;
                     }
                 }
                 break;
             case STATE_PLACE_CASE:
                 if (goToPoint(theta.theta1, theta.theta2, theta.theta_prism, 0)){
-                    if ((time_us_64() - drop_now >= 2000000ULL)) { //Drop the piece after the servo arrives the position
+                    if (time_us_64() - drop_now >= 2000000ULL) {
                         TOOL_OFF;
                         tool_used = false;
+                    }
+
+                    if (time_us_64() - drop_now >= 3000000ULL) {
                         set_servo_angle(45);
                     }
-                    if ((time_us_64() - drop_now >= 3000000ULL)) { //after an extra 1s, go to the next state
+
+                    if (time_us_64() - drop_now >= 4000000ULL) {
                         current_state = STATE_PICK_PCB;
                     }
                 }
                 break;
             case STATE_PICK_PCB:
                 if (goToPoint(theta.theta1, theta.theta2, theta.theta_prism, 1)){
-                    if ((time_us_64() - grab_now >= 2000000ULL)) {
+                    if (time_us_64() - grab_now >= 2000000ULL) {
+                        set_servo_angle(45);
+                    }
+
+                    if (time_us_64() - grab_now >= 4000000ULL) {
                         current_state = STATE_INSERT_PCB;
                     }
                 } 
                 break;
             case STATE_INSERT_PCB:
                 if (goToPoint(theta.theta1, theta.theta2, theta.theta_prism, 0)){
-                    if ((time_us_64() - drop_now >= 2000000ULL)) { //Drop the piece after the servo arrives the position
+                    if (time_us_64() - drop_now >= 2000000ULL) {
                         TOOL_OFF;
                         tool_used = false;
+                    }
+
+                    if (time_us_64() - drop_now >= 3000000ULL) {
                         set_servo_angle(45);
                     }
-                    if ((time_us_64() - drop_now >= 3000000ULL)) { //after an extra 1s, go to the next state
+
+                    if (time_us_64() - drop_now >= 4000000ULL) {
                         pcbs++;
-                        if (pcbs <= 4){
+
+                        if (pcbs <= 4) {
                             current_state = STATE_PICK_CASE;
                         } else {
                             current_state = STATE_HOMING;

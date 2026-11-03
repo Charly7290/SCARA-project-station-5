@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-ControlMode CONTROL_MODE = CONTROL_RST_INCREMENTAL; // Default control mode
+ControlMode CONTROL_MODE = CONTROL_PID; // Default control mode
 //Opciones:
 // CONTROL_PID
 // CONTROL_RST_POSITIONAL
@@ -46,17 +46,17 @@ float Tp0_M2 = 1.5215065133f;
 
 // RST INCREMENTAL ////
 // RST INCREMENTAL M1
-float Ri1_M1 = 0.4180385620f;
-float Si0_M1 = 578.3826276448f;
-float Si1_M1 = -1109.9751847208f;
-float Si2_M1 = 533.1798141995f;
-float Ti0_M1 = 1.5872571236f;
+float Ri1_M1 = 0.4316076608f;
+float Si0_M1 = 643.0978613257f;
+float Si1_M1 = -1187.4030361423f;
+float Si2_M1 = 550.4862788653f;
+float Ti0_M1 = 6.1811040487f;
 // RST INCREMENTAL M2
-float Ri1_M2 = 0.4142144367f;
-float Si0_M2 = 544.0842243802f;
-float Si1_M2 = -1043.3183317521f;
-float Si2_M2 = 500.7556138852f;
-float Ti0_M2 = 1.5215065133f;
+float Ri1_M2 = 0.4278047278f;
+float Si0_M2 = 605.9538431015f;
+float Si1_M2 = -1117.2140887628f;
+float Si2_M2 = 517.1853033786f;
+float Ti0_M2 = 5.9250577173f;
 
 
 

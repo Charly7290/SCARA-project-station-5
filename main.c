@@ -81,6 +81,11 @@ extern const float pulley_ratio_M1 = 60.0f/28.0f; // based on the timing pulley 
 extern const float pulley_ratio_M2 = 60.0f/20.0f; // based on the timing pulley teeth 
 const float target_M2_home = 131.0f * pulley_ratio_M2, target_M1_home = 103.0f * pulley_ratio_M1; 
 bool reach_z = false, tool_used = false;
+//Wait before going down in Z, so the arms stop swinging after arriving (inertia)
+const uint64_t settle_place_us = 800000ULL; //placing a piece (tool OFF)
+const uint64_t settle_pick_us = 0ULL;       //picking a piece (tool ON)
+uint64_t arrive_time = 0;
+bool arrived = false;
 
 //Point-to-point
 const float tolerance = 0.40f;  // Grados articulares
@@ -289,6 +294,7 @@ static th defineAngles(float point_X, float point_Y, float point_Z){ //Get the a
         m1_moved = false;
         m2_moved = false;
         reach_z = false;
+        arrived = false;
         goto_start_time = time_us_64();
     }
     return anglesM;
@@ -312,9 +318,9 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
     const float DEG_TO_RAD = (float)M_PI / 180.0f;
 
     ControlOutput u = salidas(angleM1*pulley_ratio_M1*DEG_TO_RAD, current_M1*pulley_ratio_M1*DEG_TO_RAD, angleM2*pulley_ratio_M2*DEG_TO_RAD, current_M2*pulley_ratio_M2*DEG_TO_RAD);
-    const float U_DZ_M1 = 13.0f;    // duty donde empieza a moverse M1 (ajústenlo aa) 
+    const float U_DZ_M1 = 15.0f;    // duty donde empieza a moverse M1 (ajústenlo aa) 
 
-    const float U_DZ_M2 = 13.0f;    // duty donde empieza a moverse M2 (ajústenlo aa)
+    const float U_DZ_M2 = 15.0f;    // duty donde empieza a moverse M2 (ajústenlo aa)
     const float U_MAX   = 20.0f;   // misma saturación del controlador
     const float U_EPS = (CONTROL_MODE == CONTROL_PID) ? 0.05f : 2.0f;
 
@@ -385,7 +391,14 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
         STOP_M1;
         move_motor(PWM_M2, 0);
         STOP_M2;
+        if (!arrived) { //first moment both joints are inside the tolerance
+            arrived = true;
+            arrive_time = time_us_64();
+        }
         if (reach_z == false) {
+            uint64_t settle_us = activate_tool ? settle_pick_us : settle_place_us;
+            if (time_us_64() - arrive_time < settle_us) return false; //still settling, Z waits
+
             set_servo_angle(angleServo);
 
             if (activate_tool) {
@@ -400,6 +413,7 @@ static bool goToPoint(float angleM1, float angleM2, float angleServo, bool activ
         }
         return true;
     }
+    arrived = false; //a joint left the tolerance (e.g. inertia), settle again when it comes back
     return false;
 }
 

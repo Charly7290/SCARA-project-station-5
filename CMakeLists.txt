@@ -15,8 +15,8 @@ add_executable(main
     main.c
     revolute.c
     prismatic.c
-    pico_uart_transport.c
     control.c
+    pico_uart_transport.c
 )
 target_link_libraries(main
     pico_stdlib

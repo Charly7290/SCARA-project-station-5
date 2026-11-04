@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-ControlMode CONTROL_MODE = CONTROL_PID; // Default control mode
+ControlMode CONTROL_MODE = CONTROL_RST_INCREMENTAL; // Default control mode
 //Opciones:
 // CONTROL_PID
 // CONTROL_RST_POSITIONAL

@@ -7,6 +7,8 @@ const MQTT_PASS  = process.env.MQTT_PASS;
 if (!MQTT_PASS) { console.error('Set MQTT_PASS in .env'); process.exit(1); }
 const MQTT_TOPIC = 'scara/telemetry';
 const ROS_TOPIC  = 'scara_telemetry';
+const MQTT_STOP_TOPIC = 'scara/control';
+const ROS_CMD_TOPIC = 'scara_cmd';
 
 /*
 It sends a value only when it changes by more than its deadband, 
@@ -31,7 +33,14 @@ const VARS = [
 const last = {};   // id -> { value, t }
 
 const client = mqtt.connect(MQTT_URL, { username: MQTT_USER, password: MQTT_PASS });
-client.on('connect', () => console.log('MQTT connected'));
+client.on('connect', () => {
+  console.log('MQTT connected');
+
+  client.subscribe(MQTT_STOP_TOPIC, (err) => {
+    if (err) console.error('MQTT subscribe error:', err);
+    else console.log('Subscribed to:', MQTT_STOP_TOPIC);
+  });
+});
 client.on('error', (e) => console.error('MQTT error:', e.message));
 
 function shouldSend(v, value, now) {
@@ -62,6 +71,21 @@ async function main() {
   const node = rclnodejs.createNode('scara_mqtt_bridge');
   node.createSubscription('std_msgs/msg/String', ROS_TOPIC,
     { qos: rclnodejs.QoS.profileSensorData }, handleTelemetry);   // best effort, matches the Pico
+
+  const publisher = node.createPublisher(
+    'std_msgs/msg/String', ROS_CMD_TOPIC);
+
+  client.on('message', (topic, message) => {
+    if (topic !== MQTT_STOP_TOPIC) return;
+
+    const command = message.toString().trim();
+
+    if (command === 'STOP') {
+      publisher.publish({ data: 'STOP' });
+      console.log('STOP enviado al SCARA');
+    }
+  });
+
   rclnodejs.spin(node);
   console.log(`Bridge running: /${ROS_TOPIC} -> ${MQTT_TOPIC}`);
 }

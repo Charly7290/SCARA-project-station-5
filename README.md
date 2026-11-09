@@ -25,39 +25,57 @@ cd ~/SCARA-project-station-5/scara-bridge && node --env-file=.env bridge.js
 
 En computador: Raspberry Pi Pico --> agente --> /scara_telemetry topic --> bridge.js --> Mosquitto --> server.js --> MariaDB --> Grafana 
 
-**INSTALACIONES PARA IOT:**\
-**Mosquitto:**\
-sudo apt update\
-sudo apt install -y mosquitto mosquitto-clients\
-sudo mosquitto_passwd -c /etc/mosquitto/passwd scara   # pide la contraseña \
-sudo tee /etc/mosquitto/conf.d/scara.conf <<'EOF'\
-listener 1883\
-allow_anonymous false\
-password_file /etc/mosquitto/passwd\
-EOF\
-sudo chown mosquitto:mosquitto /etc/mosquitto/passwd\
-sudo chmod 640 /etc/mosquitto/passwd\
-sudo systemctl enable mosquitto\
-sudo systemctl restart mosquitto\
-systemctl is-active mosquitto    # debe imprimir: active
+Configurar Comando STOP desde MQTT:
+read -rsp "Contraseña MQTT: " MQTT_PASS
+echo
+export MQTT_PASS
 
-**Node.js:**\
-sudo apt install -y curl\
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -\
-sudo apt install -y nodejs\
-node -v    # 20.20.2 o superior
+*Esto solicitará la contraseña del usuario scara, que debe coincidir con la configurada en Mosquitto. Solo es necesario realizar este paso una vez por sesión de terminal.
 
-**MariaDB, Apache, PHP y phpMyAdmin:**\
+Enviar orden STOP(Mosquitto y bridge.js deben estar ejecutándose): 
+mosquitto_pub -h localhost -p 1883 -u scara -P "$MQTT_PASS" -t 'scara/control' -m 'STOP'
 
-sudo apt install -y apache2 mariadb-server php libapache2-mod-php php-mysql\
-sudo systemctl enable --now apache2 mariadb\
-sudo mysql_secure_installation\
-sudo apt install -y phpmyadmin php-mbstring\
+mosquitto_pub	Cliente MQTT que permite publicar mensajes en un broker.
+-h localhost:	Dirección del broker Mosquitto. localhost indica que está en el mismo equipo.
+-p 1883:	Puerto de comunicación MQTT. El 1883 es el puerto estándar sin TLS.
+-u scara:	Nombre del usuario registrado en Mosquitto.
+-P "$MQTT_PASS":	Contraseña del usuario, almacenada en la variable de entorno MQTT_PASS.
+-t 'scara/control':	Tópico MQTT donde se publicará el mensaje.
+-m 'STOP':	Contenido del mensaje que se envía. En este caso, la orden de parada.
 
-- `mysql_secure_installation`: en "current password" pulse Enter; responda `n` a
-  unix_socket y a cambiar la contraseña de root, y `Y` a todo lo demás.
-- phpMyAdmin: servidor web `apache2`; configurar la base con dbconfig-common: `yes`;
-  deje vacías las contraseñas.
+  **INSTALACIONES PARA IOT:**\
+  **Mosquitto:**\
+  sudo apt update\
+  sudo apt install -y mosquitto mosquitto-clients\
+  sudo mosquitto_passwd -c /etc/mosquitto/passwd scara   # pide la contraseña \
+  sudo tee /etc/mosquitto/conf.d/scara.conf <<'EOF'\
+  listener 1883\
+  allow_anonymous false\
+  password_file /etc/mosquitto/passwd\
+  EOF\
+  sudo chown mosquitto:mosquitto /etc/mosquitto/passwd\
+  sudo chmod 640 /etc/mosquitto/passwd\
+  sudo systemctl enable mosquitto\
+  sudo systemctl restart mosquitto\
+  systemctl is-active mosquitto    # debe imprimir: active
+
+  **Node.js:**\
+  sudo apt install -y curl\
+  curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -\
+  sudo apt install -y nodejs\
+      # 20.20.2 o superior
+
+  **MariaDB, Apache, PHP y phpMyAdmin:**\
+
+  sudo apt install -y apache2 mariadb-server php libapache2-mod-php php-mysql\
+  sudo systemctl enable --now apache2 mariadb\
+  sudo mysql_secure_installation\
+  sudo apt install -y phpmyadmin php-mbstring\
+
+  - `mysql_secure_installation`: en "current password" pulse Enter; responda `n` a
+    unix_socket y a cambiar la contraseña de root, y `Y` a todo lo demás.
+  - phpMyAdmin: servidor web `apache2`; configurar la base con dbconfig-common: `yes`;
+    deje vacías las contraseñas.
 
 **Base de datos y usuario:**\
 
